@@ -1,8 +1,9 @@
+import LoginPage from '@/components/login/login'
 import React from 'react'
 
-function page() {
+const page = () => {
   return (
-    <div>Login page</div>
+    <div><LoginPage/></div>
   )
 }
 
