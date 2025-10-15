@@ -6,11 +6,11 @@ import { usePathname } from 'next/navigation';
 import { Home, Clock, FileText, User, MessageSquare } from 'lucide-react';
 
 const navItems = [
-  { href: '/employee-dashboard', label: 'Dashboard', icon: <Home size={18} /> },
-  { href: '/employee-dashboard/timesheet', label: 'Timesheet', icon: <Clock size={18} /> },
-  { href: '/employee-dashboard/projects', label: 'Projects', icon: <FileText size={18} /> },
-  { href: '/employee-dashboard/profile', label: 'Profile', icon: <User size={18} /> },
-  { href: '/employee-dashboard/support', label: 'Support', icon: <MessageSquare size={18} /> },
+  { href: '/dashboard', label: 'Dashboard', icon: <Home size={18} /> },
+  { href: '/dashboard/timesheet/register', label: 'Timesheet', icon: <Clock size={18} /> },
+  { href: '/dashboard/projects', label: 'Projects', icon: <FileText size={18} /> },
+  { href: '/dashboard/profile', label: 'Profile', icon: <User size={18} /> },
+  { href: '/dashboard/support', label: 'Support', icon: <MessageSquare size={18} /> },
 ];
 
 export default function Sidebar() {

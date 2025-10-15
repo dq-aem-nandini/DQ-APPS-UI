@@ -287,3 +287,30 @@ export interface LoginInnerResponse {
   message: string;
 }
  
+export interface TimeSheetModel {
+  workDate: string; // date
+  hoursWorked: number;
+  taskName: string;
+  taskDescription: string;
+  status: string;
+}
+
+export interface TimeSheet {
+  timesheetId: string; // uuid
+  workDate: string; // date
+  hoursWorked: number;
+  taskName: string;
+  taskDescription: string;
+  status: string;
+  createdAt: string; // date-time
+  updatedAt: string; // date-time
+}
+
+export interface WebResponseDTOTimeSheet {
+  flag: boolean;
+  message: string;
+  status: number; // int32
+  response: TimeSheet;
+  totalRecords: number; // int64
+  otherInfo: Record<string, any>;
+}
