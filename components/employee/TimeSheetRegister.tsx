@@ -181,7 +181,6 @@ const TimeSheetRegister: React.FC<{ userId?: string }> = ({ userId: propUserId }
             {allDays.map((entry, i) => {
               const isSubmitted = String(entry.status ?? '').toLowerCase() === 'submitted';
               const statusOptions = [
-                '-select-',
                 'SUBMITTED',
               ];
 
@@ -217,7 +216,7 @@ const TimeSheetRegister: React.FC<{ userId?: string }> = ({ userId: propUserId }
                   </td>
                   <td className="border p-2">
                     <select
-                      value={entry.status ?? ''}
+                      value={entry.status}
                       onChange={(e) => handleChange(i, 'status', e.target.value)}
                       className="border p-1 rounded"
                       disabled={false}
@@ -249,3 +248,6 @@ const TimeSheetRegister: React.FC<{ userId?: string }> = ({ userId: propUserId }
 };
 
 export default TimeSheetRegister;
+
+
+

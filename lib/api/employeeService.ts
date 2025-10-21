@@ -82,11 +82,13 @@ export const employeeService = {
   registerTimeSheet: async (timeSheet: TimeSheetModel) => {
     const payload = {
       workDate: timeSheet.workDate,
+      // include both names in case backend expects 'workedHours' instead of 'hoursWorked'
       hoursWorked: Number(timeSheet.hoursWorked),
+      workedHours: Number(timeSheet.hoursWorked),
       taskName: timeSheet.taskName ?? '',
       taskDescription: timeSheet.taskDescription ?? '',
       status: timeSheet.status ?? '',
-      // timesheetId: timeSheet.timesheetId ?? undefined,
+      timesheetId: timeSheet.timesheetId ?? undefined,
     };
     console.debug('[employeeService] registerTimeSheet payload:', payload);
     const res = await api.post('/employee/timesheet/register', payload);
@@ -96,16 +98,19 @@ export const employeeService = {
   // Update an existing timesheet (backend expects timesheetId in body or uses token to identify)
   updateTimeSheet: async (timeSheet: TimeSheetModel) => {
     const payload = {
+      // include timesheetId in body (some backends expect it here)
+      timesheetId: timeSheet.timesheetId ?? undefined,
       workDate: timeSheet.workDate,
+      // send both field names just in case backend expects 'workedHours' or 'hoursWorked'
       hoursWorked: Number(timeSheet.hoursWorked),
+      workedHours: Number(timeSheet.hoursWorked),
       taskName: timeSheet.taskName ?? '',
       taskDescription: timeSheet.taskDescription ?? '',
       status: timeSheet.status ?? '',
-      // timesheetId: timeSheet.timesheetId ?? undefined,
     };
     console.debug('[employeeService] updateTimeSheet payload:', payload, 'timesheetIdParam:', timeSheet.timesheetId);
 
-    // Send timesheetId both as query param (required) and in body for clarity
+    // Send timesheetId both as query param (required by some endpoints) and in body for clarity
     const res = await api.put('/employee/timesheet/update', payload, {
       params: { timesheetId: timeSheet.timesheetId },
     });
