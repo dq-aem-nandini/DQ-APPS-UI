@@ -30,7 +30,7 @@ const navSections = [
   {
     title: 'HR & Leaves',
     items: [
-      { href: '/dashboard/leaves/dashboard', label: 'Leaves', icon: <FileCheck size={18} /> },
+      { href: '/dashboard/leaves', label: 'Leaves', icon: <FileCheck size={18} /> },
       { href: '/dashboard/holidays', label: 'Holidays', icon: <Gift size={18} /> },
       { href: '/dashboard/calendar', label: 'Calendar', icon: <Calendar size={18} /> },
       { href: '/dashboard/payroll', label: 'Payroll', icon: <FileText size={18} /> },

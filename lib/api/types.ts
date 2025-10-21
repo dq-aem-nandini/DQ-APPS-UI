@@ -1,28 +1,47 @@
 // lib/api/types.ts (updated based on backend OpenAPI schema)
-export type Role = 'ADMIN' | 'EMPLOYEE' | 'CLIENT';
+export type Role = "ADMIN" | "EMPLOYEE" | "CLIENT" | "MANAGER";
 
-export type Designation = 
-  | 'INTERN'
-  | 'TRAINEE'
-  | 'ASSOCIATE_ENGINEER'
-  | 'SOFTWARE_ENGINEER'
-  | 'SENIOR_SOFTWARE_ENGINEER'
-  | 'LEAD_ENGINEER'
-  | 'TEAM_LEAD'
-  | 'TECHNICAL_ARCHITECT'
-  | 'REPORTING_MANAGER'
-  | 'DELIVERY_MANAGER'
-  | 'DIRECTOR'
-  | 'VP_ENGINEERING'
-  | 'CTO'
-  | 'HR'
-  | 'FINANCE'
-  | 'OPERATIONS';
+export type Designation =
+  | "INTERN"
+  | "TRAINEE"
+  | "ASSOCIATE_ENGINEER"
+  | "SOFTWARE_ENGINEER"
+  | "SENIOR_SOFTWARE_ENGINEER"
+  | "LEAD_ENGINEER"
+  | "TEAM_LEAD"
+  | "TECHNICAL_ARCHITECT"
+  | "PROJECT_MANAGER"
+  | "DELIVERY_MANAGER"
+  | "DIRECTOR"
+  | "VP_ENGINEERING"
+  | "CTO"
+  | "HR"
+  | "FINANCE"
+  | "OPERATIONS";
 
-export type LeaveType = 'PAID' | 'UNPAID' | 'SICK' | 'CASUAL';
+export type LeaveCategoryType = "SICK" | "CASUAL" | "PLANNED" | "UNPLANNED";
+export type FinancialType = "PAID" | "UNPAID";
+export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "WITHDRAWN";
+export interface DateRangeRequestDTO {
+  fromDate: string; // date
+  toDate: string; // date
+  partialDay?: boolean;
+}
 
-export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export interface WorkdayResponseDTO {
+  totalDays: number; // int32
+  holidays: number; // int32
+  weekends: number; // int32
+  totalHolidays: number; // int32
+  leaveDuration: number; // double
+}
 
+export interface LeaveAvailabilityDTO {
+  availableLeaves: number; // int32
+  requestedLeave: number; // double
+  message: string;
+  available: boolean;
+}
 export interface User {
   userId: string;
   userName: string;
@@ -73,25 +92,25 @@ export type AuthState = {
 };
 
 export type AuthAction =
-  | { type: 'LOGIN_SUCCESS'; payload: { user: User; accessToken: string | null; refreshToken: string | null } }
-  | { type: 'LOGOUT' }
-  | { type: 'SET_LOADING'; payload: boolean };
+  | {
+      type: "LOGIN_SUCCESS";
+      payload: {
+        user: User;
+        accessToken: string | null;
+        refreshToken: string | null;
+      };
+    }
+  | { type: "LOGOUT" }
+  | { type: "SET_LOADING"; payload: boolean };
 
 // EmployeeModel (for add/update)
-
 export interface EmployeeModel {
   firstName: string;
   lastName: string;
   personalEmail: string;
   companyEmail: string;
   contactNumber: string;
-  alternateContactNumber: string;
-  gender: string;
-  maritalStatus?: string;
-  numberOfChildren?: number;
-  employeePhotoUrl?: string;
-  clientId?: string;
-  reportingManagerId?: string;
+  clientId: string;
   designation: Designation;
   dateOfBirth: string;
   dateOfJoining: string;
@@ -99,28 +118,27 @@ export interface EmployeeModel {
   rateCard: number;
   panNumber: string;
   aadharNumber: string;
-  accountNumber?: string;
-  accountHolderName?: string;
-  bankName?: string;
-  ifscCode?: string;
-  branchName?: string;
-  houseNo?: string;
-  streetName?: string;
-  city?: string;
-  state?: string;
-  pinCode?: string;
-  country?: string;
-  addressType?: string;
-  panCardUrl?: string;
-  aadharCardUrl?: string;
-  bankPassbookUrl?: string;
-  tenthCftUrl?: string;
-  interCftUrl?: string;
-  degreeCftUrl?: string;
-  postGraduationCftUrl?: string;
+  accountNumber: string;
+  accountHolderName: string;
+  bankName: string;
+  ifscCode: string;
+  branchName: string;
+  houseNo: string;
+  streetName: string;
+  city: string;
+  state: string;
+  pinCode: string;
+  country: string;
+  panCardUrl: string;
+  aadharCardUrl: string;
+  bankPassbookUrl: string;
+  tenthCftUrl: string;
+  interCftUrl: string;
+  degreeCftUrl: string;
+  postGraduationCftUrl: string;
 }
 
-// Client Model (for add/update)
+// ClientModel (for add/update)
 export interface ClientModel {
   companyName: string;
   contactNumber: string;
@@ -128,19 +146,12 @@ export interface ClientModel {
   gst: string;
   currency: string;
   panNumber: string;
-  addressModel: AddressModel;
-}
-
-// AddressModel
-export interface AddressModel {
-  addressId?: string;
   houseNo: string;
   streetName: string;
   city: string;
   state: string;
+  pinCode: string;
   country: string;
-  pincode: string;
-  addressType: string;
 }
 
 // BankDetails
@@ -175,7 +186,7 @@ export interface Client {
   contactNumber: string;
   email: string;
   gst: string;
-  tanNumber?: string;
+  tanNumber: string;
   currency: string;
   panNumber: string;
   status: string;
@@ -187,20 +198,12 @@ export interface Client {
 // Employee
 export interface Employee {
   employeeId: string;
-  user: User;
-  client: Client;
-  bankDetails?: BankDetails;
   reportingManager?: Employee; // Recursive reference
   firstName: string;
   lastName: string;
   personalEmail: string;
   companyEmail: string;
   contactNumber: string;
-  alternateContactNumber: string;
-  gender: string;
-  maritalStatus: string;
-  numberOfChildren: number;
-  employeePhotoUrl?: string;
   dateOfBirth: string;
   dateOfJoining: string;
   designation: Designation;
@@ -208,19 +211,19 @@ export interface Employee {
   panNumber: string;
   availableLeaves: number;
   aadharNumber: string;
-  panCardUrl: string;
-  aadharCardUrl: string;
-  bankPassbookUrl: string;
-  tenthCftUrl: string;
-  interCftUrl: string;
-  degreeCftUrl: string;
-  postGraduationCftUrl: string;
+  panCardUrl?: string;
+  aadharCardUrl?: string;
+  bankPassbookUrl?: string;
+  tenthCftUrl?: string;
+  interCftUrl?: string;
+  degreeCftUrl?: string;
+  postGraduationCftUrl?: string;
   status: string;
   createdAt: string;
   updatedAt: string;
 }
 
-// EmployeeDTO (for list/get) - extended with optional fields for view page compatibility
+// EmployeeDTO (for list/get)
 export interface EmployeeDTO {
   employeeId: string;
   firstName: string;
@@ -228,46 +231,28 @@ export interface EmployeeDTO {
   personalEmail: string;
   companyEmail: string;
   contactNumber: string;
-  alternateContactNumber?: string;
   dateOfBirth: string;
   designation: Designation;
   dateOfJoining: string;
-  gender?: string;
-  maritalStatus?: string;
-  numberOfChildren?: number;
   currency: string;
   rateCard: number;
   availableLeaves: number;
   panNumber: string;
   aadharNumber: string;
-  accountNumber?: string;
-  accountHolderName?: string;
-  bankName?: string;
-  ifscCode?: string;
-  branchName?: string;
-  houseNo?: string;
-  streetName?: string;
-  city?: string;
-  state?: string;
-  pinCode?: string;
-  country?: string;
-  addressType?: string;
-  photoUrl?: string;
-  panCardUrl: string;
-  aadharCardUrl: string;
-  bankPassbookUrl: string;
-  tenthCftUrl: string;
-  interCftUrl: string;
-  degreeCftUrl: string;
-  postGraduationCftUrl: string;
-  reportingManagerId?: string;
   clientId: string;
   clientName: string;
+  panCardUrl?: string;
+  aadharCardUrl?: string;
+  bankPassbookUrl?: string;
+  tenthCftUrl?: string;
+  interCftUrl?: string;
+  degreeCftUrl?: string;
+  postGraduationCftUrl?: string;
   status: string;
 }
 
 // ClientDTO (for list/get)
-export type ClientDTO = {
+export interface ClientDTO {
   clientId: string;
   userId: string;
   addressId: string;
@@ -280,10 +265,13 @@ export type ClientDTO = {
   status: string;
   createdAt: string;
   updatedAt: string;
-
-  // Nested address object
-  addressModel: AddressModel;
-};
+  houseNo: string;
+  streetName: string;
+  city: string;
+  state: string;
+  pinCode: string;
+  country: string;
+}
 
 // RefreshTokenRequestDTO
 export interface RefreshTokenRequestDTO {
@@ -301,28 +289,31 @@ export interface RefreshTokenResponseDTO {
 // LeaveRequestDTO
 export interface LeaveRequestDTO {
   leaveId?: string;
-  approvalName: string;
-  type: LeaveType;
-  fromDate: string;
-  toDate: string;
-  subject: string;
-  context: string;
+  categoryType: LeaveCategoryType;
+  financialType: FinancialType;
+  partialDay?: boolean;
+  leaveDuration?: number; // double
+  fromDate?: string; // date
+  toDate?: string; // date
+  subject?: string;
+  context?: string;
+  attachmentFile?: string; // binary
 }
 
-// LeaveResponseDTO
 export interface LeaveResponseDTO {
-  leaveId: string;
-  approverName: string;
-  employeeName: string;
-  fromDate: string;
-  toDate: string;
-  type: LeaveType;
-  subject: string;
-  context: string;
-  status: LeaveStatus;
-  adminComment?: string;
-  holidays: number;
-  workingdays: number;
+  leaveId?: string; // uuid
+  approverName?: string;
+  employeeName?: string;
+  fromDate?: string; // date
+  toDate?: string; // date
+  type?: string;
+  subject?: string;
+  context?: string;
+  status?: string;
+  // status: LeaveStatus;
+  managerComment?: string;
+  holidays?: number; // int32
+  leaveDuration?: number; // double
 }
 
 // SortObject
@@ -334,10 +325,10 @@ export interface SortObject {
 
 // PageableObject
 export interface PageableObject {
-  pageNumber: number;
-  pageSize: number;
   paged: boolean;
   unpaged: boolean;
+  pageNumber: number;
+  pageSize: number;
   offset: number;
   sort?: SortObject;
 }
@@ -346,10 +337,10 @@ export interface PageableObject {
 export interface PageLeaveResponseDTO {
   totalElements: number;
   totalPages: number;
-  pageable: PageableObject;
-  numberOfElements: number;
   first: boolean;
   last: boolean;
+  numberOfElements: number;
+  pageable: PageableObject;
   size: number;
   content: LeaveResponseDTO[];
   number: number;
@@ -518,16 +509,6 @@ export interface WebResponseDTOClient {
   otherInfo: Record<string, any>;
 }
 
-// WebResponseDTOAddressModel
-export interface WebResponseDTOAddressModel {
-  flag: boolean;
-  message: string;
-  status: number;
-  response: AddressModel;
-  totalRecords: number;
-  otherInfo: Record<string, any>;
-}
-
 // WebResponseDTOString
 export interface WebResponseDTOString {
   flag: boolean;
@@ -546,9 +527,45 @@ export interface RefreshInnerResponse {
   tokenType: string;
   data: any;
 }
+// ManagerLeaveDashboardDTO
+export interface ManagerLeaveDashboardDTO {
+  leaveId?: string; // uuid
+  employeeName?: string;
+  leaveType?: string;
+  leaveDuration?: number; // double
+  reason?: string;
+  attachmentUrl?: string;
+  remainingLeaves?: number; // int32
+  status?: string;
+}
 
+// WebResponseDTOListManagerLeaveDashboardDTO
+export interface WebResponseDTOListManagerLeaveDashboardDTO {
+  flag?: boolean;
+  message?: string;
+  status?: number; // int32
+  response?: ManagerLeaveDashboardDTO[];
+  totalRecords?: number; // int64
+  otherInfo?: any;
+}
+
+// WebResponseDTOMapStringString
+export interface WebResponseDTOMapStringString {
+  flag?: boolean;
+  message?: string;
+  status?: number; // int32
+  response?: { [key: string]: string };
+  totalRecords?: number; // int64
+  otherInfo?: any;
+}
 // Login Inner Response
 export interface LoginInnerResponse {
   data: any; // Can replace `any` with a more specific login response if known
   message: string;
 }
+// WebResponse wrappers (extend base WebResponseDTO<T>)
+export interface WebResponseDTOWorkdayResponseDTO
+  extends WebResponseDTO<WorkdayResponseDTO> {}
+
+export interface WebResponseDTOLeaveAvailabilityDTO
+  extends WebResponseDTO<LeaveAvailabilityDTO> {}
