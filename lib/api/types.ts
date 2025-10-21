@@ -259,18 +259,38 @@ export interface LoginDTO {
  
 
  
-// Refresh Token Inner Response
-export interface RefreshInnerResponse {
-  accessToken: string;
-  refreshToken: string;
-  refreshExpiresAt: string; // ISO date string
-  tokenType: string;
-  data: unknown;
+// Inner shape returned by the login endpoint under response.data
+export interface LoginResponseInner {
+  userId?: string;
+  employeeId?: string;
+  userName?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  createdAt?: string;
+  dateOfJoining?: string;
+  status?: string;
+  loginResponseDTO?: {
+    role?: 'ADMIN' | 'EMPLOYEE' | 'CLIENT';
+    accessToken?: string;
+    refreshToken?: string;
+  };
 }
- 
+
 export interface LoginInnerResponse {
-  data: unknown; // Can replace `unknown` with a more specific login response if known
-  message: string;
+  data: LoginResponseInner;
+  message?: string;
+}
+
+// Inner shape returned by refresh token endpoint
+export interface RefreshInnerResponse {
+  data: {
+    user?: User;
+    accessToken?: string;
+    refreshToken?: string;
+    refreshExpiresAt?: string;
+    tokenType?: string;
+  };
 }
  
 
@@ -312,76 +332,42 @@ export interface TimeSheetModel {
   hoursWorked: number;
   taskName: string;
   taskDescription: string;
-  status: 'Pending' | 'Approved' | 'Rejected' | "Draft" | "Submitted"; // strictly typed
+  status: string; // backend uses free-form string values (e.g. Draft, Submitted, Pending)
   employeeId?: string;  // optional
 }
 
-
-// Used when fetching timesheet details
+// Used when fetching timesheet details (single record returned by some endpoints)
 export interface TimeSheet {
   timesheetId: string; // uuid
   workDate: string;
   hoursWorked: number;
   taskName: string;
   taskDescription: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
+  status: string;
   createdAt: string;
   updatedAt: string;
 }
 
-// // Generic WebResponse for a single or list of timesheets
-// export interface WebResponseDTOTimeSheet {
-//   flag: boolean;
-//   message: string;
-//   status: number;
-//   response: TimeSheet | TimeSheet[]; // ✅ can handle single or list
-//   totalRecords: number;
-//   otherInfo: Record<string, any>;
-// }
-
-// export interface WebResponseDTOTimeSheet {
-//   flag: boolean;
-//   message: string;
-//   status: number; // int32
-//   response: TimeSheet;
-//   totalRecords: number; // int64
-//   otherInfo: Record<string, any>;
-// }
-
-// export interface WebResponseDTOTimeSheet {
-//   flag: boolean;
-//   message: string;
-//   status: number;
-//   response: TimeSheetModel;
-// }
- 
-export interface WebResponseDTOTimeSheet<T = TimeSheetModel | TimeSheet> {
-  flag: boolean;
-  message: string;
-  status: number;
-  response: T | T[];
-  totalRecords?: number;
-  otherInfo?: Record<string, unknown>;
+// Backend DTO returned by the employee view timesheet list
+export interface TimeSheetResponseDto {
+  timesheetId?: string;
+  clientId?: string;
+  clientName?: string;
+  employeeId?: string;
+  employeeName?: string;
+  workedHours?: number; // backend field name
+  workDate?: string;
+  taskName?: string;
+  taskDescription?: string;
+  projectName?: string;
+  projectStartedAt?: string;
+  projectEndedAt?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-
-
-
-// Used specifically when backend returns a list of timesheets
-export interface WebResponseDTOListTimesheet {
-  flag: boolean;                        // API success/failure flag
-  message: string;                      // Response message
-  status: number;                       // HTTP status
-  response: TimeSheet[];                // ✅ Always an array
-  totalRecords: number;                 // For pagination
-  otherInfo: Record<string, unknown>;       // Any additional metadata
-}
-
-
-
-
-
-
+// Frontend simplified timesheet response used in the UI (mapped from TimeSheetResponseDto)
 export interface TimeSheetResponse {
   timesheetId: string;
   workDate: string;
@@ -391,10 +377,12 @@ export interface TimeSheetResponse {
   status: string;
 }
 
-export interface TimeSheetListResponse {
-  flag: boolean;
-  message: string;
-  status: number;
-  response: TimeSheetResponse[];
-  totalRecords: number;
+// Used specifically when backend returns a list of timesheets
+export interface WebResponseDTOListTimesheet {
+  flag: boolean;                        // API success/failure flag
+  message: string;                      // Response message
+  status: number;                       // HTTP status
+  response: TimeSheetResponseDto[];     // backend list DTO
+  totalRecords: number;                 // For pagination
+  otherInfo: Record<string, unknown>;       // Any additional metadata
 }

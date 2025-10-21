@@ -56,20 +56,59 @@
 
 
 import api from './axios';
-import { TimeSheetModel, WebResponseDTOTimeSheet, WebResponseDTOListTimesheet } from './types';
+import { TimeSheetModel, TimeSheetResponse, TimeSheetResponseDto, WebResponseDTOListTimesheet } from './types';
 
 export const employeeService = {
-  // Fetch list of timesheets
-  viewTimeSheet: async (userId?: string) => {
+  // Fetch list of timesheets for the current logged-in employee between startDate and endDate
+  viewTimeSheet: async (startDate?: string, endDate?: string): Promise<TimeSheetResponse[]> => {
     const res = await api.get<WebResponseDTOListTimesheet>('/employee/view/timesheet', {
-      params: { userId },
+      params: { startDate, endDate },
     });
-    return res.data; // response is WebResponseDTOListTimesheet
+
+    const list: TimeSheetResponseDto[] = res.data?.response || [];
+
+    // Map backend TimeSheetResponseDto => frontend TimeSheetResponse
+    return list.map((item: TimeSheetResponseDto) => ({
+      timesheetId: item.timesheetId ?? '',
+      workDate: item.workDate ?? '',
+      hoursWorked: item.workedHours ?? 0,
+      taskName: item.taskName ?? '',
+      taskDescription: item.taskDescription ?? '',
+      status: item.status ?? 'Draft',
+    }));
   },
 
-  // Register a new timesheet (only needs TimeSheetModel)
+  // Register a new timesheet
   registerTimeSheet: async (timeSheet: TimeSheetModel) => {
-    const res = await api.post<WebResponseDTOTimeSheet>('/employee/timesheet/register', timeSheet);
-    return res.data; // response is WebResponseDTOTimeSheet
+    const payload = {
+      workDate: timeSheet.workDate,
+      hoursWorked: Number(timeSheet.hoursWorked),
+      taskName: timeSheet.taskName ?? '',
+      taskDescription: timeSheet.taskDescription ?? '',
+      status: timeSheet.status ?? '',
+      // timesheetId: timeSheet.timesheetId ?? undefined,
+    };
+    console.debug('[employeeService] registerTimeSheet payload:', payload);
+    const res = await api.post('/employee/timesheet/register', payload);
+    return res.data;
+  },
+
+  // Update an existing timesheet (backend expects timesheetId in body or uses token to identify)
+  updateTimeSheet: async (timeSheet: TimeSheetModel) => {
+    const payload = {
+      workDate: timeSheet.workDate,
+      hoursWorked: Number(timeSheet.hoursWorked),
+      taskName: timeSheet.taskName ?? '',
+      taskDescription: timeSheet.taskDescription ?? '',
+      status: timeSheet.status ?? '',
+      // timesheetId: timeSheet.timesheetId ?? undefined,
+    };
+    console.debug('[employeeService] updateTimeSheet payload:', payload, 'timesheetIdParam:', timeSheet.timesheetId);
+
+    // Send timesheetId both as query param (required) and in body for clarity
+    const res = await api.put('/employee/timesheet/update', payload, {
+      params: { timesheetId: timeSheet.timesheetId },
+    });
+    return res.data;
   },
 };
