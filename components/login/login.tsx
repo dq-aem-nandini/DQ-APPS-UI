@@ -18,9 +18,10 @@ const Login: React.FC = () => {
   useEffect(() => {
     if (state.isAuthenticated && state.user) {
       console.log('Auto-redirecting based on updated state:', state.user.role); // Debug
-      const path = state.user.role === 'EMPLOYEE' ? '/dashboard' :  
+      const path = state.user.role === 'EMPLOYEE' ? '/dashboard' :
                    state.user.role === 'ADMIN' ? '/admin-dashboard' :
-                   '/client-dashboard';  // Default fallback
+                                    '/client-dashboard';  // Default fallback
+
       router.push(path);
     }
   }, [state.isAuthenticated, state.user?.role, router]);  // Added role to deps for precision
@@ -33,9 +34,13 @@ const Login: React.FC = () => {
       await login(credentials);
       // NO REDIRECT HERE—let useEffect handle it after state updates
       console.log('Login API succeeded, waiting for state update...'); // Debug
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err); // Debug
-      setError(err.message || 'Invalid username or password. Please try again.');
+      if (err instanceof Error) {
+        setError(err.message || 'Invalid username or password. Please try again.');
+      } else {
+        setError(String(err) || 'Invalid username or password. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
