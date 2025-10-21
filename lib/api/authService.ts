@@ -35,7 +35,7 @@ export const authService = {
         userName: isAdmin
           ? (innerData.userName as string)
           : `${innerData.firstName ?? ""} ${innerData.lastName ?? ""}`.trim(),
-          companyEmail: innerData.companyEmail || undefined,
+        companyEmail: ((innerData as Record<string, unknown>)['companyEmail'] ?? innerData.email ?? "") as string,
         role: innerData.loginResponseDTO?.role as "ADMIN" | "EMPLOYEE" | "CLIENT",
         createdAt: isAdmin ? (innerData.createdAt as string) : (innerData.dateOfJoining as string),
         updatedAt: isAdmin
@@ -73,16 +73,19 @@ export const authService = {
       { refreshToken }
     );
     if (response.data.flag) {
-      const inner = response.data.response?.data as RefreshInnerResponse['data'];
+      // Use the typed shape from RefreshInnerResponse to avoid `any`
+      const inner = response.data.response?.data as RefreshInnerResponse['data'] | undefined;
 
       if (!inner || !inner.user) {
         throw new Error('Refresh response missing user');
       }
+      const { user, accessToken, refreshToken: newRefreshToken } = inner;
 
-      const { user, accessToken: accessTokenRaw, refreshToken: newRefreshToken } = inner;
+      // const { user, accessToken: accessTokenRaw, refreshToken: newRefreshToken } = inner;
 
       // Ensure returned tokens are strings (provide sensible defaults)
-      const accessTokenStr: string = accessTokenRaw ?? "";
+      // const accessTokenStr: string = accessTokenRaw ?? "";
+      const accessTokenStr: string = accessToken ?? "";
       const refreshTokenStr: string = newRefreshToken ?? "";
 
       return { user: user as User, accessToken: accessTokenStr, refreshToken: refreshTokenStr };
