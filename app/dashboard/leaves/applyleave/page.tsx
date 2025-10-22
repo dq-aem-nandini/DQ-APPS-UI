@@ -1,41 +1,72 @@
-// app/dashboard/leaves/applyleave/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
+import { useRouter, useSearchParams } from 'next/navigation';
 import { leaveService } from '@/lib/api/leaveService';
-import { LeaveCategoryType, FinancialType, LeaveRequestDTO, LeaveAvailabilityDTO } from '@/lib/api/types';
+import { LeaveCategoryType, FinancialType, LeaveRequestDTO, LeaveAvailabilityDTO, LeaveResponseDTO } from '@/lib/api/types';
 import { useAuth } from '@/context/AuthContext';
 
 const ApplyLeavePage: React.FC = () => {
   const { state: { user } } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const leaveId = searchParams.get('leaveId');
   const [formData, setFormData] = useState<LeaveRequestDTO>({
+    leaveId: leaveId || undefined,
     categoryType: 'CASUAL' as LeaveCategoryType,
     financialType: 'PAID' as FinancialType,
     partialDay: false,
     leaveDuration: 0,
     fromDate: '',
     toDate: '',
-    subject: '',
     context: '',
   });
   const [attachment, setAttachment] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
   const [calculating, setCalculating] = useState(false);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
-  // Enum values from backend schema (integrated via types; update types if backend changes)
+  // Enum values from backend schema
   const categoryTypes: LeaveCategoryType[] = ['SICK', 'CASUAL', 'PLANNED', 'UNPLANNED'];
   const financialTypes: FinancialType[] = ['PAID', 'UNPAID'];
 
-  // Dynamic: Auto-calculate leave duration when dates or partialDay change
+  // Fetch leave data for update
+  useEffect(() => {
+    const fetchLeaveData = async () => {
+      if (leaveId && user?.userId) {
+        try {
+          setLoading(true);
+          setError(null);
+          const leave = await leaveService.getLeaveById(leaveId);
+          setFormData({
+            leaveId: leave.leaveId,
+            categoryType: leave.leaveCategoryType as LeaveCategoryType,
+            financialType: leave.financialType as FinancialType,
+            partialDay:false,
+            fromDate: leave.fromDate,
+            toDate: leave.toDate,
+            context: leave.context || '',
+            leaveDuration: leave.leaveDuration || 0,
+          });
+          console.log('🧩 Fetched leave data:', leave);
+        } catch (err) {
+          console.error('❌ Error fetching leave data:', err);
+          setError('Failed to load leave data. Please try again.');
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchLeaveData();
+  }, [leaveId, user?.userId]);
+
+  // Auto-calculate leave duration when dates or partialDay change
   useEffect(() => {
     const calculateDuration = async () => {
-      if (formData.fromDate && formData.toDate && !loading) {
+      if (formData.fromDate && formData.toDate && !loading && !calculating) {
         try {
           setCalculating(true);
           setError(null);
@@ -46,28 +77,26 @@ const ApplyLeavePage: React.FC = () => {
           };
           const response = await leaveService.calculateWorkingDays(range);
           const calculatedDuration = response.leaveDuration || 0;
-          setFormData(prev => ({ ...prev, leaveDuration: calculatedDuration }));
+          setFormData((prev) => ({ ...prev, leaveDuration: calculatedDuration }));
 
-          // After calculating duration, check availability if employeeId is available
+          // Check availability if employeeId is available
           if (user?.userId && calculatedDuration > 0) {
             await checkAvailability(user.userId, calculatedDuration);
           }
         } catch (err: any) {
           console.error('Failed to calculate duration:', err);
           if (err.code === 'ERR_NETWORK' || err.message.includes('Network Error') || err.message.includes('ERR_CONNECTION_REFUSED')) {
-            // Fallback: Simple date diff (inclusive days, excluding weekends/holidays approximation)
             const from = new Date(formData.fromDate);
             const to = new Date(formData.toDate);
             let diffDays = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-            // Approximate weekends (subtract 2/7 of days)
             const approxWeekends = Math.floor(diffDays / 7) * 2;
             diffDays = Math.max(1, diffDays - approxWeekends);
             const fallbackDuration = formData.partialDay ? 0.5 : diffDays;
-            setFormData(prev => ({ ...prev, leaveDuration: fallbackDuration }));
+            setFormData((prev) => ({ ...prev, leaveDuration: fallbackDuration }));
             setError('Using approximate calculation (server temporarily unavailable). For precise count, check backend status.');
           } else {
             setError('Failed to calculate leave duration. Please enter manually.');
-            setFormData(prev => ({ ...prev, leaveDuration: 0 }));
+            setFormData((prev) => ({ ...prev, leaveDuration: 0 }));
           }
         } finally {
           setCalculating(false);
@@ -75,7 +104,7 @@ const ApplyLeavePage: React.FC = () => {
       }
     };
 
-    const timeoutId = setTimeout(calculateDuration, 500); // Debounce for 500ms
+    const timeoutId = setTimeout(calculateDuration, 500);
     return () => clearTimeout(timeoutId);
   }, [formData.fromDate, formData.toDate, formData.partialDay, loading, user?.userId]);
 
@@ -87,15 +116,14 @@ const ApplyLeavePage: React.FC = () => {
       setCheckingAvailability(true);
       const availability: LeaveAvailabilityDTO = await leaveService.checkLeaveAvailability(employeeId, leaveDuration);
       if (!availability.available) {
-        setFormData(prev => ({ ...prev, financialType: 'UNPAID' as FinancialType }));
+        setFormData((prev) => ({ ...prev, financialType: 'UNPAID' as FinancialType }));
         setError(availability.message || 'Insufficient paid leaves available. Switching to unpaid leave.');
       } else {
-        setFormData(prev => ({ ...prev, financialType: 'PAID' as FinancialType }));
-        if (error && error.includes('Insufficient')) setError(null); // Clear previous error if available now
+        setFormData((prev) => ({ ...prev, financialType: 'PAID' as FinancialType }));
+        if (error && error.includes('Insufficient')) setError(null);
       }
     } catch (err: any) {
       console.error('Failed to check leave availability:', err);
-      // Do not override duration error; just log
       if (err.code !== 'ERR_NETWORK') {
         setError('Could not verify leave balance. Proceeding with paid leave.');
       }
@@ -107,18 +135,18 @@ const ApplyLeavePage: React.FC = () => {
   // Dynamic label generation from enum value
   const getLabel = (value: string, isCategory: boolean = false): string => {
     const words = value.toLowerCase().split('_');
-    const capitalized = words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    const capitalized = words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     return isCategory ? `${capitalized} Leave` : capitalized;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
     if (name === 'leaveDuration') {
-      setError(null); // Clear manual entry error
+      setError(null);
     }
   };
 
@@ -148,23 +176,30 @@ const ApplyLeavePage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      await leaveService.applyLeave(formData, attachment);
-      setSuccess(true);
-      setTimeout(() => router.push('/dashboard/leaves'), 2000); // Redirect after success
+      if (formData.leaveId) {
+        // Update existing leave
+        await leaveService.updateLeave(formData, attachment);
+        setSuccess('Leave updated successfully! Redirecting...');
+      } else {
+        // Create new leave
+        await leaveService.applyLeave(formData, attachment);
+        setSuccess('Leave applied successfully! Redirecting...');
+      }
+      setTimeout(() => router.push('/dashboard/leaves'), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to apply leave');
+      setError(err instanceof Error ? err.message : 'Failed to process leave request');
     } finally {
       setLoading(false);
     }
   };
 
   if (success) {
-    return <div className="flex justify-center items-center h-64"><p className="text-green-600">Leave applied successfully! Redirecting...</p></div>;
+    return <div className="flex justify-center items-center h-64"><p className="text-green-600">{success}</p></div>;
   }
 
   return (
     <div className="apply-leave-page p-6 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Apply for New Leave</h1>
+      <h1 className="text-3xl font-bold mb-6">{formData.leaveId ? 'Update Leave Request' : 'Apply for New Leave'}</h1>
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">Leave Type</label>
@@ -172,9 +207,10 @@ const ApplyLeavePage: React.FC = () => {
             name="categoryType"
             value={formData.categoryType}
             onChange={handleInputChange}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
             required
           >
+            <option value="">Select Leave Type</option>
             {categoryTypes.map((type) => (
               <option key={type} value={type}>
                 {getLabel(type, true)}
@@ -189,9 +225,9 @@ const ApplyLeavePage: React.FC = () => {
             name="partialDay"
             checked={formData.partialDay}
             onChange={handleInputChange}
-            className="rounded"
+            className="rounded h-4 w-4 text-blue-600 focus:ring-blue-500"
           />
-          <label className="text-sm">Partial Day</label>
+          <label className="text-sm font-medium">Partial Day</label>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -202,7 +238,7 @@ const ApplyLeavePage: React.FC = () => {
               name="fromDate"
               value={formData.fromDate}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
               required
             />
           </div>
@@ -213,7 +249,7 @@ const ApplyLeavePage: React.FC = () => {
               name="toDate"
               value={formData.toDate}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
               required
             />
           </div>
@@ -228,9 +264,10 @@ const ApplyLeavePage: React.FC = () => {
             onChange={handleInputChange}
             min="0.5"
             step="0.5"
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
             placeholder="Auto-calculated..."
             required
+            readOnly
           />
           {(calculating || checkingAvailability) && <p className="text-xs text-gray-500 mt-1">Processing...</p>}
         </div>
@@ -241,9 +278,10 @@ const ApplyLeavePage: React.FC = () => {
             name="financialType"
             value={formData.financialType}
             onChange={handleInputChange}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
             required
           >
+            <option value="">Select Financial Type</option>
             {financialTypes.map((type) => (
               <option key={type} value={type}>
                 {getLabel(type, false)}
@@ -253,25 +291,13 @@ const ApplyLeavePage: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Subject</label>
-          <input
-            type="text"
-            name="subject"
-            value={formData.subject}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div>
           <label className="block text-sm font-medium mb-1">Description</label>
           <textarea
             name="context"
             value={formData.context}
             onChange={handleInputChange}
             rows={4}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
             required
           />
         </div>
@@ -282,18 +308,18 @@ const ApplyLeavePage: React.FC = () => {
             type="file"
             onChange={handleFileChange}
             accept=".pdf,.jpg,.png"
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
-        {error && <p className="text-red-500">{error}</p>}
+        {error && <p className="text-red-500 text-sm">{error}</p>}
 
         <button
           type="submit"
           disabled={loading || calculating || checkingAvailability}
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:opacity-50 transition duration-300"
         >
-          {loading ? 'Submitting...' : 'Apply Leave'}
+          {loading ? 'Processing...' : formData.leaveId ? 'Update Leave' : 'Apply Leave'}
         </button>
       </form>
     </div>

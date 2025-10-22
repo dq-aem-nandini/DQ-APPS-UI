@@ -1,15 +1,15 @@
-// components/LeaveDashboard.tsx (Updated: Removed Recent Pending Requests table)
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { leaveService } from '@/lib/api/leaveService';
-
 import { LeaveResponseDTO } from '@/lib/api/types';
 import { useAuth } from '@/context/AuthContext';
+import { ArrowLeft } from 'lucide-react';
 
 const LeaveDashboard: React.FC = () => {
-  const { state: { user } } = useAuth(); // ✅ Safe: useAuth ensures non-null context
+  const { state: { user } } = useAuth();
   const router = useRouter();
   const [dashboardData, setDashboardData] = useState<{
     balances: { availableLeaves: number };
@@ -22,7 +22,7 @@ const LeaveDashboard: React.FC = () => {
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const currentYear = new Date().getFullYear(); // Dynamic: Current year (2025)
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     if (!user || user.role !== 'EMPLOYEE') {
@@ -50,9 +50,8 @@ const LeaveDashboard: React.FC = () => {
   if (error) return <div className="error text-red-500 p-4">Error: {error}</div>;
   if (!dashboardData) return <div className="text-gray-500 p-4">No data available.</div>;
 
-  const { balances, pendingRequests, approvedRequests, rejectedRequests, totalLeavesTaken, remainingLeaves,withdrawnRequests } = dashboardData;
+  const { balances, pendingRequests, approvedRequests, rejectedRequests, totalLeavesTaken, remainingLeaves, withdrawnRequests } = dashboardData;
 
-  // Dynamic: Filter for current year
   const thisYearApproved = approvedRequests.filter((req: LeaveResponseDTO) => 
     req.fromDate && new Date(req.fromDate).getFullYear() === currentYear
   ).length;
@@ -62,11 +61,20 @@ const LeaveDashboard: React.FC = () => {
 
   const totalLeavesApplied = pendingRequests.length + approvedRequests.length + rejectedRequests.length;
 
-  const handleApplyLeave = () => router.push('/dashboard/leaves/applyleave'); // ✅ Redirect to apply leave page
+  const handleApplyLeave = () => router.push('/dashboard/leaves/applyleave');
 
   return (
     <div className="leave-dashboard p-6 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Leave Dashboard</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">Leave Dashboard</h1>
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow-md transition duration-300"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          Back
+        </button>
+      </div>
 
       {/* Action Cards Section */}
       <section className="action-cards grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
