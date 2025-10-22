@@ -1,4 +1,3 @@
-// lib/api/types.ts (updated based on backend OpenAPI schema)
 export type Role = "ADMIN" | "EMPLOYEE" | "CLIENT" | "MANAGER";
 
 export type Designation =
@@ -10,7 +9,7 @@ export type Designation =
   | "LEAD_ENGINEER"
   | "TEAM_LEAD"
   | "TECHNICAL_ARCHITECT"
-  | "PROJECT_MANAGER"
+  | "REPORTING_MANAGER" // Updated to match schema
   | "DELIVERY_MANAGER"
   | "DIRECTOR"
   | "VP_ENGINEERING"
@@ -22,6 +21,18 @@ export type Designation =
 export type LeaveCategoryType = "SICK" | "CASUAL" | "PLANNED" | "UNPLANNED";
 export type FinancialType = "PAID" | "UNPAID";
 export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "WITHDRAWN";
+
+export interface AddressModel {
+  addressId?: string; // uuid
+  houseNo?: string;
+  streetName?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  pincode?: string; // Updated to match schema
+  addressType?: string;
+}
+
 export interface DateRangeRequestDTO {
   fromDate: string; // date
   toDate: string; // date
@@ -37,19 +48,20 @@ export interface WorkdayResponseDTO {
 }
 
 export interface LeaveAvailabilityDTO {
-  availableLeaves: number; // int32
+  availableLeaves: number; // double, updated to match schema
   requestedLeave: number; // double
   message: string;
   available: boolean;
 }
+
 export interface User {
-  userId: string;
+  userId: string; // uuid
   userName: string;
   companyEmail: string;
   password?: string; // Optional, as it's not always included
   role: Role;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string; // date-time
+  updatedAt: string; // date-time
 }
 
 export interface LoginRequest {
@@ -65,7 +77,7 @@ export interface LoginDTO {
 export interface TokenResponseData {
   accessToken?: string;
   refreshToken?: string;
-  refreshExpiresAt?: string;
+  refreshExpiresAt?: string; // date-time
   tokenType?: string;
 }
 
@@ -77,9 +89,9 @@ export interface ApiResponseObject<T = any> {
 export interface WebResponseDTO<T> {
   flag: boolean;
   message: string;
-  status: number;
-  response: T;
-  totalRecords: number;
+  status: number; // int32
+ response: T | null;    // ✅ FIX: allow null for failure cases
+  totalRecords: number; // int64
   otherInfo: any;
 }
 
@@ -104,18 +116,62 @@ export type AuthAction =
   | { type: "SET_LOADING"; payload: boolean };
 
 // EmployeeModel (for add/update)
+// export interface EmployeeModel {
+//   firstName: string;
+//   lastName: string;
+//   personalEmail: string;
+//   companyEmail: string;
+//   contactNumber: string;
+//   alternateContactNumber?: string | null;// Added from schema
+//   gender?: string; // Added from schema
+//   maritalStatus?: string; // Added from schema
+//   numberOfChildren?: number; // Added from schema
+//   employeePhotoUrl?: string; // Added from schema
+//   clientId: string; // uuid
+//   reportingManagerId?: string; // uuid, added from schema
+//   designation: Designation;
+//   dateOfBirth: string; // date
+//   dateOfJoining: string; // date
+//   currency: string;
+//   rateCard: number;
+//   employmentType?: "CONTRACTOR" | "FREELANCER" | "FULLTIME"; // Added from schema
+//   panNumber: string;
+//   aadharNumber: string;
+//   accountNumber: string;
+//   accountHolderName: string;
+//   bankName: string;
+//   ifscCode: string;
+//   branchName: string;
+//   addresses?: AddressModel[]; // Added from schema
+//   panCardUrl: string;
+//   aadharCardUrl: string;
+//   bankPassbookUrl: string;
+//   tenthCftUrl: string;
+//   interCftUrl: string;
+//   degreeCftUrl: string;
+//   postGraduationCftUrl: string;
+// }
+
+
 export interface EmployeeModel {
   firstName: string;
   lastName: string;
   personalEmail: string;
   companyEmail: string;
   contactNumber: string;
-  clientId: string;
+  alternateContactNumber: string;
+  gender: string;
+  maritalStatus: string;
+  numberOfChildren: number;
+  employeePhotoUrl: string;
+  clientId: string; // UUID
+  reportingManagerId: string; // UUID
   designation: Designation;
-  dateOfBirth: string;
-  dateOfJoining: string;
+  dateOfBirth: string; // ISO Date (YYYY-MM-DD)
+  dateOfJoining: string; // ISO Date (YYYY-MM-DD)
   currency: string;
   rateCard: number;
+  employmentType: "CONTRACTOR" | "FREELANCER" | "FULLTIME"; // Added from schema
   panNumber: string;
   aadharNumber: string;
   accountNumber: string;
@@ -123,12 +179,7 @@ export interface EmployeeModel {
   bankName: string;
   ifscCode: string;
   branchName: string;
-  houseNo: string;
-  streetName: string;
-  city: string;
-  state: string;
-  pinCode: string;
-  country: string;
+  addresses: AddressModel[];
   panCardUrl: string;
   aadharCardUrl: string;
   bankPassbookUrl: string;
@@ -137,7 +188,6 @@ export interface EmployeeModel {
   degreeCftUrl: string;
   postGraduationCftUrl: string;
 }
-
 // ClientModel (for add/update)
 export interface ClientModel {
   companyName: string;
@@ -146,41 +196,46 @@ export interface ClientModel {
   gst: string;
   currency: string;
   panNumber: string;
-  houseNo: string;
-  streetName: string;
-  city: string;
-  state: string;
-  pinCode: string;
-  country: string;
+  tanNumber?: string; // Added from schema
+  addresses?: AddressModel[]; // Added from schema
+  clientPocs?: ClientPocModel[]; // Added from schema
+}
+
+export interface ClientPocModel {
+  name: string;
+  email: string;
+  contactNumber: string;
+  designation: string;
 }
 
 // BankDetails
 export interface BankDetails {
-  bankAccountId: string;
+  bankAccountId: string; // uuid
   accountHolderName: string;
   accountNumber: string;
   ifscCode: string;
   bankName: string;
   branchName: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string; // date-time
+  updatedAt: string; // date-time
 }
 
 // ClientPoc
 export interface ClientPoc {
-  pocId: string;
+  pocId: string; // uuid
+  client?: Client; // Added from schema
   name: string;
   email: string;
   contactNumber: string;
   designation: string;
   status: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string; // date-time
+  updatedAt: string; // date-time
 }
 
 // Client
 export interface Client {
-  clientId: string;
+  clientId: string; // uuid
   user: User;
   companyName: string;
   contactNumber: string;
@@ -190,87 +245,158 @@ export interface Client {
   currency: string;
   panNumber: string;
   status: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string; // date-time
+  updatedAt: string; // date-time
   pocs?: ClientPoc[];
 }
 
 // Employee
 export interface Employee {
-  employeeId: string;
-  reportingManager?: Employee; // Recursive reference
+  employeeId: string; // UUID
+  user?: User; // linked user object
+  client?: Client; // linked client object
+  companyId?: string;
+  bankDetails?: BankDetails; // employee bank info
+  reportingManager?: Employee; // recursive reference
   firstName: string;
   lastName: string;
   personalEmail: string;
   companyEmail: string;
   contactNumber: string;
-  dateOfBirth: string;
-  dateOfJoining: string;
-  designation: Designation;
+  alternateContactNumber: string;
+  gender: string;
+  maritalStatus: string;
+  numberOfChildren: number;
+  dateOfBirth: string; // ISO date
+  dateOfJoining: string; // ISO date
+  designation:Designation;
+  employmentType: "CONTRACTOR" | "FREELANCER" | "FULLTIME"; // e.g., 'FULL_TIME' | 'PART_TIME' | 'CONTRACT'
   rateCard: number;
   panNumber: string;
   availableLeaves: number;
   aadharNumber: string;
-  panCardUrl?: string;
-  aadharCardUrl?: string;
-  bankPassbookUrl?: string;
-  tenthCftUrl?: string;
-  interCftUrl?: string;
-  degreeCftUrl?: string;
-  postGraduationCftUrl?: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
+  employeePhotoUrl: string;
+  panCardUrl: string;
+  aadharCardUrl: string;
+  bankPassbookUrl: string;
+  tenthCftUrl: string;
+  interCftUrl: string;
+  degreeCftUrl: string;
+  postGraduationCftUrl: string;
+  status: string; // e.g., 'ACTIVE' | 'INACTIVE' | 'TERMINATED'
+  createdAt: string; // ISO date-time
+  updatedAt: string; // ISO date-time
 }
 
-// EmployeeDTO (for list/get)
+// // EmployeeDTO (for list/get)
+// export interface EmployeeDTO {
+//   employeeId: string; // uuid
+//   firstName: string;
+//   lastName: string;
+//   personalEmail: string;
+//   companyEmail: string;
+//   contactNumber: string | null; // Consistent with cURL response
+//   alternateContactNumber?: string| null;
+//   gender: string | undefined;
+//   maritalStatus: string | undefined;
+//   numberOfChildren: number | undefined;
+//   dateOfBirth: string; // date
+//   employeePhotoUrl?: string;
+//   designation: string;
+//   dateOfJoining: string; // date
+//   rateCard: number;
+//   availableLeaves: number;
+//   employmentType?: "CONTRACTOR" | "FREELANCER" | "FULLTIME"; // Added from schema
+//   companyId: string | undefined;
+//   accountNumber: string | undefined;
+//   accountHolderName: string;
+//   bankName: string;
+//   ifscCode: string;
+//   branchName: string;
+//   panNumber: string;
+//   aadharNumber: string;
+//   clientId: string; // uuid
+//   clientName: string;
+//   reportingManagerId: string; // uuid
+//   reportingManagerName: string;
+//   panCardUrl?: string;
+//   aadharCardUrl?: string;
+//   bankPassbookUrl?: string;
+//   tenthCftUrl?: string;
+//   interCftUrl?: string;
+//   degreeCftUrl?: string;
+//   postGraduationCftUrl?: string;
+//   addresses?:AddressModel[]; // Added from schema
+//   status: string;
+//   createdAt: string; // date-time
+//   updatedAt: string; // date-time
+// }
 export interface EmployeeDTO {
-  employeeId: string;
+  employeeId: string; // UUID
   firstName: string;
   lastName: string;
   personalEmail: string;
   companyEmail: string;
   contactNumber: string;
-  dateOfBirth: string;
+  alternateContactNumber: string;
+  gender: string;
+  maritalStatus: string;
+  numberOfChildren: number;
+  dateOfBirth: string; // ISO Date (YYYY-MM-DD)
+  employeePhotoUrl: string;
   designation: Designation;
-  dateOfJoining: string;
-  currency: string;
+  dateOfJoining: string; // ISO Date (YYYY-MM-DD)
   rateCard: number;
   availableLeaves: number;
+  employmentType: "CONTRACTOR" | "FREELANCER" | "FULLTIME"; // Added from schema
+  companyId: string;
+  accountNumber: string;
+  accountHolderName: string;
+  bankName: string;
+  ifscCode: string;
+  branchName: string;
   panNumber: string;
+  currency: string
   aadharNumber: string;
-  clientId: string;
+  clientId: string; // UUID
   clientName: string;
-  panCardUrl?: string;
-  aadharCardUrl?: string;
-  bankPassbookUrl?: string;
-  tenthCftUrl?: string;
-  interCftUrl?: string;
-  degreeCftUrl?: string;
-  postGraduationCftUrl?: string;
-  status: string;
+  reportingManagerId: string; // UUID
+  reportingManagerName: string;
+  panCardUrl: string;
+  aadharCardUrl: string;
+  bankPassbookUrl: string;
+  tenthCftUrl: string;
+  interCftUrl: string;
+  degreeCftUrl: string;
+  postGraduationCftUrl: string;
+  addresses: AddressModel[]; // Added from schema
+  status: string; // e.g., 'ACTIVE' | 'INACTIVE' | 'TERMINATED'
+  createdAt: string; // ISO date-time
+  updatedAt: string; // ISO date-time
 }
-
 // ClientDTO (for list/get)
 export interface ClientDTO {
-  clientId: string;
-  userId: string;
-  addressId: string;
+  clientId: string; // uuid
+  userId: string; // uuid
+  addressId?: string; // uuid, updated to optional
   companyName: string;
   contactNumber: string;
   email: string;
   gst: string;
   currency: string;
   panNumber: string;
+  tanNumber?: string; // Added from schema
   status: string;
-  createdAt: string;
-  updatedAt: string;
-  houseNo: string;
-  streetName: string;
-  city: string;
-  state: string;
-  pinCode: string;
-  country: string;
+  createdAt: string; // date-time
+  updatedAt: string; // date-time
+  houseNo?: string; // Made optional to align with schema
+  streetName?: string; // Made optional
+  city?: string; // Made optional
+  state?: string; // Made optional
+  pinCode?: string; // Made optional
+  country?: string; // Made optional
+  addresses?: AddressModel[]; // Added from schema
+  pocs?: ClientPoc[]; // Added from schema
 }
 
 // RefreshTokenRequestDTO
@@ -282,13 +408,13 @@ export interface RefreshTokenRequestDTO {
 export interface RefreshTokenResponseDTO {
   accessToken: string;
   refreshToken: string;
-  refreshExpiresAt: string;
+  refreshExpiresAt: string; // date-time
   tokenType: string;
 }
 
 // LeaveRequestDTO
 export interface LeaveRequestDTO {
-  leaveId?: string;
+  leaveId?: string; // uuid
   categoryType: LeaveCategoryType;
   financialType: FinancialType;
   partialDay?: boolean;
@@ -306,11 +432,11 @@ export interface LeaveResponseDTO {
   employeeName?: string;
   fromDate?: string; // date
   toDate?: string; // date
-  type?: string;
+  financialType?: string; // Updated to match schema
+  leaveCategoryType?: string; // Updated to match schema
   subject?: string;
   context?: string;
-  status?: string;
-  // status: LeaveStatus;
+  status?: LeaveStatus; // Updated to use LeaveStatus
   managerComment?: string;
   holidays?: number; // int32
   leaveDuration?: number; // double
@@ -327,23 +453,23 @@ export interface SortObject {
 export interface PageableObject {
   paged: boolean;
   unpaged: boolean;
-  pageNumber: number;
-  pageSize: number;
-  offset: number;
+  pageNumber: number; // int32
+  pageSize: number; // int32
+  offset: number; // int64
   sort?: SortObject;
 }
 
 // PageLeaveResponseDTO
 export interface PageLeaveResponseDTO {
-  totalElements: number;
-  totalPages: number;
+  totalElements: number; // int64
+  totalPages: number; // int32
   first: boolean;
   last: boolean;
-  numberOfElements: number;
+  numberOfElements: number; // int32
   pageable: PageableObject;
-  size: number;
+  size: number; // int32
   content: LeaveResponseDTO[];
-  number: number;
+  number: number; // int32
   sort?: SortObject;
   empty: boolean;
 }
@@ -372,24 +498,24 @@ export interface TimeSheet {
 
 // TimeSheetResponseDto
 export interface TimeSheetResponseDto {
-  timesheetId: string;
-  clientId: string;
+  timesheetId: string; // uuid
+  clientId: string; // uuid
   clientName: string;
-  employeeId: string;
+  employeeId: string; // uuid
   employeeName: string;
   workedHours: number;
-  workDate: string;
+  workDate: string; // date
   taskName: string;
   taskDescription: string;
   projectName?: string;
-  projectStartedAt?: string;
-  projectEndedAt?: string;
+  projectStartedAt?: string; // date
+  projectEndedAt?: string; // date
   status: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string; // date-time
+  updatedAt: string; // date-time
 }
 
-// WebResponseDTOTimeSheet (specific for TimeSheet)
+// WebResponseDTOTimeSheet
 export interface WebResponseDTOTimeSheet {
   flag: boolean;
   message: string;
@@ -403,9 +529,9 @@ export interface WebResponseDTOTimeSheet {
 export interface WebResponseDTOListTimeSheetResponseDto {
   flag: boolean;
   message: string;
-  status: number;
+  status: number; // int32
   response: TimeSheetResponseDto[];
-  totalRecords: number;
+  totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
 
@@ -413,9 +539,9 @@ export interface WebResponseDTOListTimeSheetResponseDto {
 export interface WebResponseDTOTimeSheetResponseDto {
   flag: boolean;
   message: string;
-  status: number;
+  status: number; // int32
   response: TimeSheetResponseDto;
-  totalRecords: number;
+  totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
 
@@ -423,9 +549,9 @@ export interface WebResponseDTOTimeSheetResponseDto {
 export interface WebResponseDTOLeaveResponseDTO {
   flag: boolean;
   message: string;
-  status: number;
+  status: number; // int32
   response: LeaveResponseDTO;
-  totalRecords: number;
+  totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
 
@@ -433,9 +559,9 @@ export interface WebResponseDTOLeaveResponseDTO {
 export interface WebResponseDTOPageLeaveResponseDTO {
   flag: boolean;
   message: string;
-  status: number;
+  status: number; // int32
   response: PageLeaveResponseDTO;
-  totalRecords: number;
+  totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
 
@@ -443,9 +569,9 @@ export interface WebResponseDTOPageLeaveResponseDTO {
 export interface WebResponseDTOListString {
   flag: boolean;
   message: string;
-  status: number;
+  status: number; // int32
   response: string[];
-  totalRecords: number;
+  totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
 
@@ -453,9 +579,9 @@ export interface WebResponseDTOListString {
 export interface WebResponseDTOEmployeeDTO {
   flag: boolean;
   message: string;
-  status: number;
+  status: number; // int32
   response: EmployeeDTO;
-  totalRecords: number;
+  totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
 
@@ -463,9 +589,9 @@ export interface WebResponseDTOEmployeeDTO {
 export interface WebResponseDTOListEmployeeDTO {
   flag: boolean;
   message: string;
-  status: number;
+  status: number; // int32
   response: EmployeeDTO[];
-  totalRecords: number;
+  totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
 
@@ -473,9 +599,9 @@ export interface WebResponseDTOListEmployeeDTO {
 export interface WebResponseDTOClientDTO {
   flag: boolean;
   message: string;
-  status: number;
+  status: number; // int32
   response: ClientDTO;
-  totalRecords: number;
+  totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
 
@@ -483,9 +609,9 @@ export interface WebResponseDTOClientDTO {
 export interface WebResponseDTOListClientDTO {
   flag: boolean;
   message: string;
-  status: number;
+  status: number; // int32
   response: ClientDTO[];
-  totalRecords: number;
+  totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
 
@@ -493,9 +619,9 @@ export interface WebResponseDTOListClientDTO {
 export interface WebResponseDTOEmployee {
   flag: boolean;
   message: string;
-  status: number;
+  status: number; // int32
   response: Employee;
-  totalRecords: number;
+  totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
 
@@ -503,9 +629,9 @@ export interface WebResponseDTOEmployee {
 export interface WebResponseDTOClient {
   flag: boolean;
   message: string;
-  status: number;
+  status: number; // int32
   response: Client;
-  totalRecords: number;
+  totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
 
@@ -513,9 +639,9 @@ export interface WebResponseDTOClient {
 export interface WebResponseDTOString {
   flag: boolean;
   message: string;
-  status: number;
+  status: number; // int32
   response: string;
-  totalRecords: number;
+  totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
 
@@ -523,10 +649,11 @@ export interface WebResponseDTOString {
 export interface RefreshInnerResponse {
   accessToken: string;
   refreshToken: string;
-  refreshExpiresAt: string; // ISO date string
+  refreshExpiresAt: string; // date-time
   tokenType: string;
   data: any;
 }
+
 // ManagerLeaveDashboardDTO
 export interface ManagerLeaveDashboardDTO {
   leaveId?: string; // uuid
@@ -535,7 +662,7 @@ export interface ManagerLeaveDashboardDTO {
   leaveDuration?: number; // double
   reason?: string;
   attachmentUrl?: string;
-  remainingLeaves?: number; // int32
+  remainingLeaves?: number; // double, updated to match schema
   status?: string;
 }
 
@@ -558,14 +685,19 @@ export interface WebResponseDTOMapStringString {
   totalRecords?: number; // int64
   otherInfo?: any;
 }
+
 // Login Inner Response
 export interface LoginInnerResponse {
   data: any; // Can replace `any` with a more specific login response if known
   message: string;
 }
+
 // WebResponse wrappers (extend base WebResponseDTO<T>)
 export interface WebResponseDTOWorkdayResponseDTO
   extends WebResponseDTO<WorkdayResponseDTO> {}
 
 export interface WebResponseDTOLeaveAvailabilityDTO
   extends WebResponseDTO<LeaveAvailabilityDTO> {}
+
+export interface WebResponseDTOApiResponseObject
+  extends WebResponseDTO<ApiResponseObject> {}

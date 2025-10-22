@@ -16,6 +16,7 @@ const LeaveDashboard: React.FC = () => {
     pendingRequests: LeaveResponseDTO[];
     approvedRequests: LeaveResponseDTO[];
     rejectedRequests: LeaveResponseDTO[];
+    withdrawnRequests: LeaveResponseDTO[];
     totalLeavesTaken: number;
     remainingLeaves: number;
   } | null>(null);
@@ -49,7 +50,7 @@ const LeaveDashboard: React.FC = () => {
   if (error) return <div className="error text-red-500 p-4">Error: {error}</div>;
   if (!dashboardData) return <div className="text-gray-500 p-4">No data available.</div>;
 
-  const { balances, pendingRequests, approvedRequests, rejectedRequests, totalLeavesTaken, remainingLeaves } = dashboardData;
+  const { balances, pendingRequests, approvedRequests, rejectedRequests, totalLeavesTaken, remainingLeaves,withdrawnRequests } = dashboardData;
 
   // Dynamic: Filter for current year
   const thisYearApproved = approvedRequests.filter((req: LeaveResponseDTO) => 
@@ -77,13 +78,13 @@ const LeaveDashboard: React.FC = () => {
         </div>
         <div className="card bg-white p-6 rounded-lg shadow-md border">
           <h3 className="text-lg font-semibold mb-2">View All Leaves</h3>
-          <button onClick={() => router.push('/leaves/history')} className="btn-secondary bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">
+          <button onClick={() => router.push('/dashboard/leaves/history')} className="btn-secondary bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">
             View History
           </button>
         </div>
         <div className="card bg-white p-6 rounded-lg shadow-md border">
           <h3 className="text-lg font-semibold mb-2">Leave Calendar</h3>
-          <button onClick={() => router.push('/leaves/calendar')} className="btn-secondary bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">
+          <button onClick={() => router.push('/dashboard/leaves/calendar')} className="btn-secondary bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">
             View Calendar
           </button>
         </div>
@@ -92,7 +93,7 @@ const LeaveDashboard: React.FC = () => {
       {/* KPI Cards Section */}
       <section className="kpi-cards grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         <div className="card kpi-card bg-blue-50 p-4 rounded-lg text-center border">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Available Paid Leaves</h3>
+          <h3 className="text-sm font-medium text-gray-600 mb-1">Available Leaves</h3>
           <p className="value text-2xl font-bold text-blue-600">{balances.availableLeaves}</p>
         </div>
         <div className="card kpi-card bg-yellow-50 p-4 rounded-lg text-center border">
@@ -107,13 +108,13 @@ const LeaveDashboard: React.FC = () => {
           <h3 className="text-sm font-medium text-gray-600 mb-1">Rejected This Year</h3>
           <p className="value text-2xl font-bold text-red-600">{thisYearRejected}</p>
         </div>
+        <div className="card kpi-card bg-indigo-50 p-4 rounded-lg text-center border">
+          <h3 className="text-sm font-medium text-gray-600 mb-1">Withdrawn Requests</h3>
+          <p className="value text-2xl font-bold text-indigo-600">{withdrawnRequests.length}</p>
+        </div>
         <div className="card kpi-card bg-purple-50 p-4 rounded-lg text-center border">
           <h3 className="text-sm font-medium text-gray-600 mb-1">Total Leaves Applied</h3>
           <p className="value text-2xl font-bold text-purple-600">{totalLeavesApplied}</p>
-        </div>
-        <div className="card kpi-card bg-indigo-50 p-4 rounded-lg text-center border">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Leave Balance</h3>
-          <p className="value text-2xl font-bold text-indigo-600">{remainingLeaves}</p>
         </div>
       </section>
     </div>

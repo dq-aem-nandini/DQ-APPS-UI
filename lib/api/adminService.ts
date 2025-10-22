@@ -1,126 +1,210 @@
-// lib/api/adminService.ts
 import api from './axios';
-import { EmployeeModel, ClientModel, WebResponseDTO, EmployeeDTO, ClientDTO } from './types';
+import {
+  EmployeeModel,
+  ClientModel,
+  WebResponseDTOEmployeeDTO,
+  WebResponseDTOListEmployeeDTO,
+  WebResponseDTOClientDTO,
+  WebResponseDTOListClientDTO,
+  WebResponseDTOString,
+  WebResponseDTOClient,
+  WebResponseDTOListString,
+  WebResponseDTOEmployee,
+  WebResponseDTOTimeSheetResponseDto,
+  WebResponseDTOListTimeSheetResponseDto,
+} from './types';
+import { AxiosResponse } from 'axios';
 
-export const adminService = {
-  // Employee Operations
-  async addEmployee(employeeModel: EmployeeModel): Promise<EmployeeDTO> {
-    const params = new URLSearchParams();
-    Object.keys(employeeModel).forEach(key => {
-      params.append(key, (employeeModel as any)[key]);
-    });
-    const response = await api.post<WebResponseDTO<EmployeeDTO>>(`/admin/add/employee?${params.toString()}`);
-    if (response.data.flag) {
-      return response.data.response;
-    }
-    throw new Error(response.data.message || 'Failed to add employee');
-  },
-
-  async getAllEmployees(): Promise<EmployeeDTO[]> {
-    const response = await api.get<WebResponseDTO<EmployeeDTO[]>>('/admin/emp/all');
-    if (response.data.flag) {
-      return response.data.response;
-    }
-    throw new Error(response.data.message || 'Failed to fetch employees');
-  },
-
-  async getEmployeeById(empId: string): Promise<EmployeeDTO> {
-    const response = await api.get<WebResponseDTO<EmployeeDTO>>(`/admin/emp/${empId}`);
-    if (response.data.flag) {
-      return response.data.response;
-    }
-    throw new Error(response.data.message || 'Failed to fetch employee');
-  },
-  async getEmployeesByDesignation(designation: string): Promise<EmployeeDTO[]> {
-    const response = await api.get<WebResponseDTO<EmployeeDTO[]>>(`/employee/designation/${designation}`);
-    if (response.data.flag) {
-      return response.data.response;
-    }
-    throw new Error(response.data.message || 'Failed to fetch employees by designation');
-  },
-  async updateEmployee(empId: string, employeeModel: EmployeeModel): Promise<string> {
-    const params = new URLSearchParams();
-    Object.keys(employeeModel).forEach(key => {
-      params.append(key, (employeeModel as any)[key]);
-    });
-    const response = await api.put<WebResponseDTO<string>>(`/admin/updateemp/${empId}?${params.toString()}`);
-    if (response.data.flag) {
-      return response.data.response;
-    }
-    throw new Error(response.data.message || 'Failed to update employee');
-  },
-
-  async deleteEmployee(empId: string): Promise<string> {
-    const response = await api.delete<WebResponseDTO<string>>(`/admin/${empId}`);
-    if (response.data.flag) {
-      return response.data.response;
-    }
-    throw new Error(response.data.message || 'Failed to delete employee');
-  },
- // Client Operations
- async addClient(clientModel: ClientModel): Promise<ClientDTO> {
-  const response = await api.post<WebResponseDTO<ClientDTO>>(
-    '/admin/add/client',
-    clientModel // send as JSON body
-  );
-  if (response.data.flag) {
-    return response.data.response;
-  }
-  throw new Error(response.data.message || 'Failed to add client');
-}
-,
-
-  async getAllClients(): Promise<ClientDTO[]> {
-    const response = await api.get<WebResponseDTO<ClientDTO[]>>('/admin/client/all');
-    if (response.data.flag) {
-      return response.data.response;
-    }
-    throw new Error(response.data.message || 'Failed to fetch clients');
-  },
-
-  async getClientById(clientId: string): Promise<ClientDTO> {
-    const response = await api.get<WebResponseDTO<ClientDTO>>(`/admin/client/${clientId}`);
-    if (response.data.flag) {
-      return response.data.response;
-    }
-    throw new Error(response.data.message || 'Failed to fetch client');
-  },
-
-  async updateClient(clientId: string, clientModel: ClientModel): Promise<string> {
-    const params = new URLSearchParams();
-    Object.keys(clientModel).forEach(key => {
-      params.append(key, (clientModel as any)[key]);
-    });
-    const response = await api.put<WebResponseDTO<string>>(`/admin/updateclient/${clientId}?${params.toString()}`);
-    if (response.data.flag) {
-      return response.data.response;
-    }
-    throw new Error(response.data.message || 'Failed to update client');
-  },
-
-  async deleteClient(clientId: string): Promise<string> {
-    const response = await api.delete<WebResponseDTO<string>>(`/admin/client/${clientId}`);
-    if (response.data.flag) {
-      return response.data.response;
-    }
-    throw new Error(response.data.message || 'Failed to delete client');
-  },
-
-  async uploadFile(file: File): Promise<string> {
+export class AdminService {
+  // Add client
+  async addClient(client: ClientModel): Promise<WebResponseDTOClient> {
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await api.post<WebResponseDTO<{ url: string }>>('/admin/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      if (response.data.flag) {
-        return response.data.response.url;
-      }
-      throw new Error(response.data.message || 'Failed to upload file');
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to upload file');
+      const response: AxiosResponse<WebResponseDTOClient> = await api.post(
+        '/admin/add/client',
+        client
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to add client: ${error}`);
     }
-  },
-};
+  }
+
+  // Add employee
+  async addEmployee(employee: EmployeeModel): Promise<WebResponseDTOEmployeeDTO> {
+    try {
+      const response: AxiosResponse<WebResponseDTOEmployeeDTO> = await api.post(
+        '/admin/add/employee',
+        employee
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to add employee: ${error}`);
+    }
+  }
+
+  // Update client
+  async updateClient(clientId: string, clientModel: ClientModel): Promise<WebResponseDTOString> {
+    try {
+      const response: AxiosResponse<WebResponseDTOString> = await api.put(
+        `/admin/updateclient/${clientId}`,
+        clientModel // Updated to send clientModel in body
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to update client: ${error}`);
+    }
+  }
+
+  // Update employee
+  async updateEmployee(empId: string, employee: EmployeeModel): Promise<WebResponseDTOString> {
+    try {
+      const response: AxiosResponse<WebResponseDTOString> = await api.put(
+        `/admin/updateemp/${empId}`,
+        employee
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to update employee: ${error}`);
+    }
+  }
+
+  // Delete client by ID
+  async deleteClientById(clientId: string): Promise<WebResponseDTOString> {
+    try {
+      const response: AxiosResponse<WebResponseDTOString> = await api.delete(
+        `/admin/client/${clientId}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to delete client: ${error}`);
+    }
+  }
+
+  // Delete employee by ID
+  async deleteEmployeeById(empId: string): Promise<WebResponseDTOString> {
+    try {
+      const response: AxiosResponse<WebResponseDTOString> = await api.delete(
+        `/admin/${empId}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to delete employee: ${error}`);
+    }
+  }
+
+  // Get client by ID
+  async getClientById(clientId: string): Promise<WebResponseDTOClientDTO> {
+    try {
+      const response: AxiosResponse<WebResponseDTOClientDTO> = await api.get(
+        `/admin/client/${clientId}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get client by ID: ${error}`);
+    }
+  }
+
+  // Get all clients
+  async getAllClients(): Promise<WebResponseDTOListClientDTO> {
+    try {
+      const response: AxiosResponse<WebResponseDTOListClientDTO> = await api.get(
+        '/admin/client/all'
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get all clients: ${error}`);
+    }
+  }
+
+  // Get employee by ID
+  async getEmployeeById(empId: string): Promise<WebResponseDTOEmployeeDTO> {
+    try {
+      const response: AxiosResponse<WebResponseDTOEmployeeDTO> = await api.get(
+        `/admin/emp/${empId}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get employee by ID: ${error}`);
+    }
+  }
+
+  // Get all employees
+  async getAllEmployees(): Promise<WebResponseDTOListEmployeeDTO> {
+    try {
+      const response: AxiosResponse<WebResponseDTOListEmployeeDTO> = await api.get(
+        '/admin/emp/all'
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get all employees: ${error}`);
+    }
+  }
+
+  // Unassign employee from client
+  async unassignEmployeeFromClient(empId: string): Promise<WebResponseDTOString> {
+    try {
+      const response: AxiosResponse<WebResponseDTOString> = await api.patch(
+        `/admin/emp/${empId}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to unassign employee from client: ${error}`);
+    }
+  }
+
+  // Get all admin names
+  async getAllAdminNames(): Promise<WebResponseDTOListString> {
+    try {
+      const response: AxiosResponse<WebResponseDTOListString> = await api.get(
+        '/admin/getAllAdminNames'
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get all admin names: ${error}`);
+    }
+  }
+
+  // Get all timesheets
+  async getAllTimesheets(params: {
+    page?: number;
+    size?: number;
+    direction?: string;
+    orderBy?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<WebResponseDTOListTimeSheetResponseDto> {
+    try {
+      const response: AxiosResponse<WebResponseDTOListTimeSheetResponseDto> = await api.get(
+        '/admin/timesheet/all',
+        { params }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get all timesheets: ${error}`);
+    }
+  }
+
+  // Get timesheet by ID
+  async getTimesheetById(timesheetId: string): Promise<WebResponseDTOTimeSheetResponseDto> {
+    try {
+      const response: AxiosResponse<WebResponseDTOTimeSheetResponseDto> = await api.get(
+        `/admin/timesheet/${timesheetId}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get timesheet by ID: ${error}`);
+    }
+  }
+
+  // Get employee by timesheet ID
+  async getEmployeeByTimesheetId(timesheetId: string): Promise<WebResponseDTOEmployee> {
+    try {
+      const response: AxiosResponse<WebResponseDTOEmployee> = await api.get(
+        `/admin/employee/timesheet/${timesheetId}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get employee by timesheet ID: ${error}`);
+    }
+  }
+}
