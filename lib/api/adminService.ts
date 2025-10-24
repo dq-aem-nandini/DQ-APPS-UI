@@ -1,3 +1,4 @@
+
 import api from './axios';
 import {
   EmployeeModel,
@@ -15,7 +16,7 @@ import {
 } from './types';
 import { AxiosResponse } from 'axios';
 
-export class AdminService {
+class AdminService {
   // Add client
   async addClient(client: ClientModel): Promise<WebResponseDTOClient> {
     try {
@@ -47,7 +48,7 @@ export class AdminService {
     try {
       const response: AxiosResponse<WebResponseDTOString> = await api.put(
         `/admin/updateclient/${clientId}`,
-        clientModel // Updated to send clientModel in body
+        clientModel
       );
       return response.data;
     } catch (error) {
@@ -163,48 +164,6 @@ export class AdminService {
       throw new Error(`Failed to get all admin names: ${error}`);
     }
   }
-
-  // Get all timesheets
-  async getAllTimesheets(params: {
-    page?: number;
-    size?: number;
-    direction?: string;
-    orderBy?: string;
-    startDate?: string;
-    endDate?: string;
-  }): Promise<WebResponseDTOListTimeSheetResponseDto> {
-    try {
-      const response: AxiosResponse<WebResponseDTOListTimeSheetResponseDto> = await api.get(
-        '/admin/timesheet/all',
-        { params }
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(`Failed to get all timesheets: ${error}`);
-    }
-  }
-
-  // Get timesheet by ID
-  async getTimesheetById(timesheetId: string): Promise<WebResponseDTOTimeSheetResponseDto> {
-    try {
-      const response: AxiosResponse<WebResponseDTOTimeSheetResponseDto> = await api.get(
-        `/admin/timesheet/${timesheetId}`
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(`Failed to get timesheet by ID: ${error}`);
-    }
-  }
-
-  // Get employee by timesheet ID
-  async getEmployeeByTimesheetId(timesheetId: string): Promise<WebResponseDTOEmployee> {
-    try {
-      const response: AxiosResponse<WebResponseDTOEmployee> = await api.get(
-        `/admin/employee/timesheet/${timesheetId}`
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(`Failed to get employee by timesheet ID: ${error}`);
-    }
-  }
 }
+
+export const adminService = new AdminService();

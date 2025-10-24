@@ -15,15 +15,14 @@ import {
   WebResponseDTOWorkdayResponseDTO,
   WebResponseDTOLeaveAvailabilityDTO,
   WebResponseDTOString,
-  WebResponseDTOListManagerLeaveDashboardDTO,
-  ManagerLeaveDashboardDTO,
-  WebResponseDTOMapStringString,
-  WebResponseDTOListString,
+  WebResponseDTOListPendingLeavesResponseDTO,
+  PendingLeavesResponseDTO,
   User,
   EmployeeDTO,
-  WebResponseDTOEmployeeDTO,
+  WebResponseDTOListEmployeeLeaveDayDTO,
+  EmployeeLeaveDayDTO,
 } from './types';
-import { AxiosResponse } from 'axios';
+import { AxiosResponse, AxiosError } from 'axios';
 
 export const leaveService = {
   /**
@@ -40,7 +39,7 @@ export const leaveService = {
       });
 
       if (attachment) {
-        formData.append('attachmentFile', attachment); // Optional per spec
+        formData.append('attachmentFile', attachment);
       }
 
       const response: AxiosResponse<WebResponseDTOLeaveResponseDTO> = await api.post(
@@ -76,7 +75,7 @@ export const leaveService = {
       });
 
       if (attachment) {
-        formData.append('attachmentFile', attachment); // Optional per spec
+        formData.append('attachmentFile', attachment);
       }
 
       const response: AxiosResponse<WebResponseDTOLeaveResponseDTO> = await api.put(
@@ -225,7 +224,6 @@ export const leaveService = {
 
   /**
    * Get paginated leave summary (for dashboard; uses filters like employeeId, status, etc.).
-   * Returns PageLeaveResponseDTO with content categorized by status if needed.
    */
   async getLeaveSummary(
     employeeId?: string,
@@ -237,107 +235,126 @@ export const leaveService = {
     date?: string,
     page: number = 0,
     size: number = 10,
-    sort: string = 'fromDate,desc'
-  ): Promise<PageLeaveResponseDTO> {
-    try {
-      const params = new URLSearchParams();
-      if (employeeId) params.append('employeeId', employeeId);
-      if (month) params.append('month', month);
-      if (type) params.append('leaveCategory', type);
-      if (status) params.append('status', status);
-      if (financialType) params.append('financialType', financialType);
-      if (futureApproved !== undefined) params.append('futureApproved', futureApproved.toString());
-      if (date) params.append('date', date);
-      params.append('page', page.toString());
-      params.append('size', size.toString());
-      params.append('sort', sort);
+    sort: string = 'fromDate,desc',
+    maxRetries: number = 3
+  ): Promise<WebResponseDTOPageLeaveResponseDTO> {
+    let retryCount = 0;
+    while (retryCount <= maxRetries) {
+      try {
+        const params = new URLSearchParams();
+        if (employeeId) params.append('employeeId', employeeId);
+        if (month) params.append('month', month);
+        if (type) params.append('leaveCategory', type);
+        if (status) params.append('status', status);
+        if (financialType) params.append('financialType', financialType);
+        if (futureApproved !== undefined) params.append('futureApproved', futureApproved.toString());
+        if (date) params.append('date', date);
+        params.append('page', page.toString());
+        params.append('size', size.toString());
+        params.append('sort', sort);
 
-      const response: AxiosResponse<WebResponseDTOPageLeaveResponseDTO> = await api.get(
-        `/employee/leave-summary?${params.toString()}`
-      );
+        const response: AxiosResponse<WebResponseDTOPageLeaveResponseDTO> = await api.get(
+          `/employee/leave-summary`,
+          { params }
+        );
 
-      console.log('🧩 Full leave summary API response:', response.data.response);
+        console.log('🧩 Full leave summary API response:', response.data);
 
-      if (response.data.flag && response.data.response) {
-        return response.data.response;
+        if (response.data.flag && response.data.response) {
+          return response.data;
+        }
+
+        throw new Error(response.data.message || 'Failed to fetch leave summary');
+      } catch (error: unknown) {
+        retryCount++;
+        console.error(`❌ Error fetching leave summary (Attempt ${retryCount}/${maxRetries}):`, error);
+        if (retryCount > maxRetries) {
+          let errorMessage = 'Failed to fetch leave summary';
+          let errorStatus = 500;
+          if (error instanceof AxiosError) {
+            errorMessage = error.response?.data?.message || error.message || 'Failed to fetch leave summary';
+            errorStatus = error.response?.status || 500;
+          }
+          return {
+            flag: false,
+            message: errorMessage,
+            status: errorStatus,
+            response: {
+              content: [],
+              totalPages: 0,
+              totalElements: 0,
+              first: true,
+              last: true,
+              numberOfElements: 0,
+              pageable: { paged: true, unpaged: false, pageNumber: 0, pageSize: 10, offset: 0, sort: { sorted: true, unsorted: false, empty: false } },
+              size: 0,
+              number: 0,
+              sort: { sorted: true, unsorted: false, empty: false },
+              empty: true,
+            },
+            totalRecords: 0,
+            otherInfo: {},
+          };
+        }
+        // Exponential backoff
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
-
-      throw new Error(response.data.message || 'Failed to fetch leave summary');
-    } catch (error) {
-      console.error('❌ Error fetching leave summary:', error);
-      throw new Error(`Failed to fetch leave summary: ${error}`);
     }
+    return {
+      flag: false,
+      message: 'Failed to fetch leave summary after retries',
+      status: 500,
+      response: {
+        content: [],
+        totalPages: 0,
+        totalElements: 0,
+        first: true,
+        last: true,
+        numberOfElements: 0,
+        pageable: { paged: true, unpaged: false, pageNumber: 0, pageSize: 10, offset: 0, sort: { sorted: true, unsorted: false, empty: false } },
+        size: 0,
+        number: 0,
+        sort: { sorted: true, unsorted: false, empty: false },
+        empty: true,
+      },
+      totalRecords: 0,
+      otherInfo: {},
+    };
   },
 
   /**
    * Get pending leaves for manager dashboard (GET no params).
    */
-  async getPendingLeaves(): Promise<ManagerLeaveDashboardDTO[]> {
-    try {
-      const response: AxiosResponse<WebResponseDTOListManagerLeaveDashboardDTO> = await api.get(
-        '/employee/leave/pendingLeaves'
-      );
+  async getPendingLeaves(maxRetries: number = 3): Promise<PendingLeavesResponseDTO[]> {
+    let retryCount = 0;
+    while (retryCount <= maxRetries) {
+      try {
+        const response: AxiosResponse<WebResponseDTOListPendingLeavesResponseDTO> = await api.get(
+          '/employee/leave/pendingLeaves'
+        );
 
-      console.log('🧩 Full pending leaves API response:', response.data.response);
+        console.log('🧩 Full pending leaves API response:', response.data.response);
 
-      if (response.data.flag && response.data.response) {
-        return response.data.response;
+        if (response.data.flag && response.data.response) {
+          return response.data.response;
+        }
+
+        throw new Error(response.data.message || 'Failed to fetch pending leaves');
+      } catch (error) {
+        retryCount++;
+        console.error(`❌ Error fetching pending leaves (Attempt ${retryCount}/${maxRetries}):`, error);
+        if (retryCount > maxRetries) {
+          return [];
+        }
+        // Exponential backoff
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
-
-      return [];
-    } catch (error) {
-      console.error('❌ Error fetching pending leaves:', error);
-      return [];
     }
-  },
-
-  /**
-   * Get all company holidays (GET no params; returns Map<String, String>).
-   */
-  async getCompanyHolidays(): Promise<Record<string, string>> {
-    try {
-      const response: AxiosResponse<WebResponseDTOMapStringString> = await api.get(
-        '/employee/company/holidays'
-      );
-
-      console.log('🧩 Full company holidays API response:', response.data.response);
-
-      if (response.data.flag && response.data.response) {
-        return response.data.response;
-      }
-
-      return {};
-    } catch (error) {
-      console.error('❌ Error fetching company holidays:', error);
-      return {};
-    }
-  },
-
-  /**
-   * Get leave types (GET no params; returns list of strings).
-   */
-  async getLeaveTypes(): Promise<string[]> {
-    try {
-      const response: AxiosResponse<WebResponseDTOListString> = await api.get(
-        '/employee/leaveTypes'
-      );
-
-      console.log('🧩 Full leave types API response:', response.data.response);
-
-      if (response.data.flag && response.data.response) {
-        return response.data.response;
-      }
-
-      return [];
-    } catch (error) {
-      console.error('❌ Error fetching leave types:', error);
-      return [];
-    }
+    return [];
   },
 
   /**
    * Get leave dashboard data (fetches real employee balances + categorized requests; no hardcoded values).
-   * Enhanced error handling for invalid employee IDs or backend errors.
    */
   async getLeaveDashboard(user: User): Promise<{
     balances: { availableLeaves: number };
@@ -350,7 +367,6 @@ export const leaveService = {
     error?: string;
   }> {
     try {
-      // Fetch real employee details for availableLeaves
       let availableLeaves = 0;
       try {
         const employeeResponse: EmployeeDTO = await employeeService.getEmployeeById();
@@ -361,13 +377,16 @@ export const leaveService = {
         }
       } catch (empError) {
         console.warn('⚠️ Error fetching employee details:', empError);
-        availableLeaves = 0; // Default fallback
+        availableLeaves = 0;
       }
 
-      // Fetch all requests for the employee; handle if no employee or invalid ID
       let summary: PageLeaveResponseDTO;
       try {
-        summary = await this.getLeaveSummary(user.userId);
+        const response = await this.getLeaveSummary(user.userId);
+        if (!response.flag || !response.response) {
+          throw new Error(response.message || 'Failed to fetch leave summary');
+        }
+        summary = response.response;
       } catch (sumError) {
         console.warn('⚠️ Error fetching leave summary, using empty data:', sumError);
         summary = {
@@ -392,13 +411,11 @@ export const leaveService = {
         };
       }
 
-      // Client-side categorization by status
       const pendingRequests = summary.content.filter((req) => req.status === 'PENDING');
       const approvedRequests = summary.content.filter((req) => req.status === 'APPROVED');
       const rejectedRequests = summary.content.filter((req) => req.status === 'REJECTED');
       const withdrawnRequests = summary.content.filter((req) => req.status === 'WITHDRAWN');
 
-      // Calculate totals from approved requests' leaveDuration
       const totalLeavesTaken = approvedRequests.reduce((sum, req) => sum + (req.leaveDuration ?? 0), 0);
       const remainingLeaves = Math.max(0, availableLeaves - totalLeavesTaken);
 
@@ -425,4 +442,30 @@ export const leaveService = {
       };
     }
   },
+  async getApprovedLeaves(year?: string): Promise<EmployeeLeaveDayDTO[]> {
+    try {
+      // Backend expects LocalDate format (ISO: YYYY-MM-DD), so pass as string
+      const currentYear = year || new Date().getFullYear().toString();
+      const formattedDate = `${currentYear}-01-01`; // Matches LocalDate.toString() in backend
+  
+      const params = new URLSearchParams();
+      params.append('currentYear', formattedDate); // Send as string; backend parses to LocalDate
+  
+      const response: AxiosResponse<WebResponseDTOListEmployeeLeaveDayDTO> = await api.get(
+        `/employee/approved/leaves`,
+        { params }
+      );
+  
+      console.log('🧩 Full approved leaves API response:', response.data.response);
+  
+      if (response.data.flag && response.data.response) {
+        return response.data.response;
+      }
+  
+      throw new Error(response.data.message || 'Failed to fetch approved leaves');
+    } catch (error) {
+      console.error('❌ Error fetching approved leaves:', error);
+      throw new Error(`Failed to fetch approved leaves: ${error}`);
+    }
+  }
 };

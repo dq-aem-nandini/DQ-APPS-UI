@@ -185,7 +185,7 @@ const ApplyLeavePage: React.FC = () => {
         await leaveService.applyLeave(formData, attachment);
         setSuccess('Leave applied successfully! Redirecting...');
       }
-      setTimeout(() => router.push('/dashboard/leaves'), 2000);
+      setTimeout(() => router.push('/dashboard/leaves'), 1000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process leave request');
     } finally {

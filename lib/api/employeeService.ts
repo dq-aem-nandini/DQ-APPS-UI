@@ -19,42 +19,7 @@ import {
 import { AxiosResponse, AxiosError } from 'axios';
 
 class EmployeeService {
-  /**
-   * Update employee details (PUT with body).
-   */
-  // async updateEmployee(employee: EmployeeModel): Promise<WebResponseDTO<EmployeeDTO>> {
-  //   try {
-  //     const response: AxiosResponse<WebResponseDTO<EmployeeDTO>> = await api.put(
-  //       '/employee/update',
-  //       employee
-  //     );
-  //     console.log('🧩 Full update employee API response:', response.data);
-  //     if (response.data.flag && response.data.response) {
-  //       return response.data;
-  //     }
-  //     return {
-  //       flag: false,
-  //       message: response.data.message || 'Failed to update employee',
-  //       status: response.data.status || 400,
-  //       response: null as any, // Use null to satisfy type, assuming response can be null
-  //       totalRecords: 0,
-  //       otherInfo: null,
-  //     };
-  //   } catch (error: unknown) {
-  //     console.error('❌ Error updating employee:', error);
-  //     const errorMessage = error instanceof AxiosError
-  //       ? error.response?.data?.message || error.message || 'Failed to update employee'
-  //       : 'Failed to update employee';
-  //     return {
-  //       flag: false,
-  //       message: errorMessage,
-  //       status: error instanceof AxiosError ? error.response?.status || 500 : 500,
-  //       response: null as any, // Use null to satisfy type
-  //       totalRecords: 0,
-  //       otherInfo: null,
-  //     };
-  //   }
-  // }
+ 
   async updateEmployee(employee: EmployeeModel): Promise<WebResponseDTO<EmployeeDTO>> {
     try {
       const response: AxiosResponse<WebResponseDTO<EmployeeDTO>> = await api.put(
@@ -99,45 +64,44 @@ class EmployeeService {
       };
     }
   }
-  /**
-   * Update timesheet (PUT with body).
-   */
-  async updateTimeSheet(timesheetId: string, sheetModel: TimeSheetModel): Promise<string> {
-    try {
-      const response: AxiosResponse<WebResponseDTOString> = await api.put(
-        '/employee/timesheet/update',
-        { ...sheetModel, timesheetId }
-      );
-      console.log('🧩 Full update timesheet API response:', response.data.response);
-      if (response.data.flag && response.data.response) {
-        return response.data.response;
-      }
-      throw new Error(response.data.message || 'Failed to update timesheet');
-    } catch (error) {
-      console.error('❌ Error updating timesheet:', error);
-      throw new Error(`Failed to update timesheet: ${error}`);
-    }
-  }
-
-  /**
-   * Register a new timesheet (POST with body).
-   */
-  async registerTimeSheet(timesheet: TimeSheetModel): Promise<TimeSheet> {
-    try {
-      const response: AxiosResponse<WebResponseDTOTimeSheet> = await api.post(
-        '/employee/timesheet/register',
-        timesheet
-      );
-      console.log('🧩 Full register timesheet API response:', response.data.response);
-      if (response.data.flag && response.data.response) {
-        return response.data.response;
-      }
-      throw new Error(response.data.message || 'Failed to register timesheet');
-    } catch (error) {
-      console.error('❌ Error registering timesheet:', error);
-      throw new Error(`Failed to register timesheet: ${error}`);
-    }
-  }
+  // /**
+  //  * Update timesheet (PUT with body).
+  //  */
+  // async updateTimeSheet(timesheetId: string, update: TimeSheetModel): Promise<TimeSheetResponseDto> {
+  //   try {
+  //     const response: AxiosResponse<WebResponseDTOTimeSheetResponseDto> = await api.put(
+  //       `/employee/update/timesheet/${timesheetId}`,
+  //       update
+  //     );
+  //     console.log('🧩 Full update timesheet API response:', response.data.response);
+  //     if (response.data.flag && response.data.response) {
+  //       return response.data.response;
+  //     }
+  //     throw new Error(response.data.message || 'Failed to update timesheet');
+  //   } catch (error) {
+  //     console.error('❌ Error updating timesheet:', error);
+  //     throw new Error(`Failed to update timesheet: ${error}`);
+  //   }
+  // }
+  // /**
+  //  * Register a new timesheet (POST with body).
+  //  */
+  // async registerTimeSheet(timesheet: TimeSheetModel): Promise<TimeSheet> {
+  //   try {
+  //     const response: AxiosResponse<WebResponseDTOTimeSheet> = await api.post(
+  //       '/employee/timesheet/register',
+  //       timesheet
+  //     );
+  //     console.log('🧩 Full register timesheet API response:', response.data.response);
+  //     if (response.data.flag && response.data.response) {
+  //       return response.data.response;
+  //     }
+  //     throw new Error(response.data.message || 'Failed to register timesheet');
+  //   } catch (error) {
+  //     console.error('❌ Error registering timesheet:', error);
+  //     throw new Error(`Failed to register timesheet: ${error}`);
+  //   }
+  // }
 
   /**
    * Get current employee's details (GET no params; for authenticated user).
@@ -162,65 +126,65 @@ class EmployeeService {
   /**
    * Get employee by ID for admin access (GET with path param).
    */
-  async getEmployeeByIdAdmin(empId: string): Promise<EmployeeDTO> {
-    try {
-      const response: AxiosResponse<WebResponseDTO<EmployeeDTO>> = await api.get(`/admin/emp/${empId}`);
-      console.log('🧩 Full get employee by ID (admin) API response:', response.data.response);
-      if (response.data.flag && response.data.response) {
-        return response.data.response;
-      }
-      throw new Error(response.data.message || 'Failed to fetch employee');
-    } catch (error) {
-      console.error('❌ Error fetching employee by ID (admin):', error);
-      throw new Error(`Failed to fetch employee by ID: ${error}`);
-    }
-  }
+  // async getEmployeeByIdAdmin(empId: string): Promise<EmployeeDTO> {
+  //   try {
+  //     const response: AxiosResponse<WebResponseDTO<EmployeeDTO>> = await api.get(`/admin/emp/${empId}`);
+  //     console.log('🧩 Full get employee by ID (admin) API response:', response.data.response);
+  //     if (response.data.flag && response.data.response) {
+  //       return response.data.response;
+  //     }
+  //     throw new Error(response.data.message || 'Failed to fetch employee');
+  //   } catch (error) {
+  //     console.error('❌ Error fetching employee by ID (admin):', error);
+  //     throw new Error(`Failed to fetch employee by ID: ${error}`);
+  //   }
+  // }
 
-  /**
-   * Get timesheet details with pagination and filtering (GET with query params).
-   */
-  async getTimeSheetDetails(params: {
-    page?: number;
-    size?: number;
-    direction?: string;
-    orderBy?: string;
-    startDate?: string;
-    endDate?: string;
-  }): Promise<TimeSheetResponseDto[]> {
-    try {
-      const response: AxiosResponse<WebResponseDTOListTimeSheetResponseDto> = await api.get(
-        '/employee/view/timesheet',
-        { params }
-      );
-      console.log('🧩 Full get timesheet details API response:', response.data.response);
-      if (response.data.flag && response.data.response) {
-        return response.data.response;
-      }
-      throw new Error(response.data.message || 'Failed to get timesheet details');
-    } catch (error) {
-      console.error('❌ Error fetching timesheet details:', error);
-      throw new Error(`Failed to get timesheet details: ${error}`);
-    }
-  }
+  // /**
+  //  * Get timesheet details with pagination and filtering (GET with query params).
+  //  */
+  // async getTimeSheetDetails(params: {
+  //   page?: number;
+  //   size?: number;
+  //   direction?: string;
+  //   orderBy?: string;
+  //   startDate?: string;
+  //   endDate?: string;
+  // }): Promise<TimeSheetResponseDto[]> {
+  //   try {
+  //     const response: AxiosResponse<WebResponseDTOListTimeSheetResponseDto> = await api.get(
+  //       '/employee/view/timesheet',
+  //       { params }
+  //     );
+  //     console.log('🧩 Full get timesheet details API response:', response.data.response);
+  //     if (response.data.flag && response.data.response) {
+  //       return response.data.response;
+  //     }
+  //     throw new Error(response.data.message || 'Failed to get timesheet details');
+  //   } catch (error) {
+  //     console.error('❌ Error fetching timesheet details:', error);
+  //     throw new Error(`Failed to get timesheet details: ${error}`);
+  //   }
+  // }
 
-  /**
-   * Get timesheet by ID (GET with path param).
-   */
-  async getTimeSheetById(timesheetId: string): Promise<TimeSheetResponseDto> {
-    try {
-      const response: AxiosResponse<WebResponseDTOTimeSheetResponseDto> = await api.get(
-        `/employee/view/timesheet/${timesheetId}`
-      );
-      console.log('🧩 Full get timesheet by ID API response:', response.data.response);
-      if (response.data.flag && response.data.response) {
-        return response.data.response;
-      }
-      throw new Error(response.data.message || 'Failed to get timesheet by ID');
-    } catch (error) {
-      console.error('❌ Error fetching timesheet by ID:', error);
-      throw new Error(`Failed to get timesheet by ID: ${error}`);
-    }
-  }
+  // /**
+  //  * Get timesheet by ID (GET with path param).
+  //  */
+  // async getTimeSheetById(timesheetId: string): Promise<TimeSheetResponseDto> {
+  //   try {
+  //     const response: AxiosResponse<WebResponseDTOTimeSheetResponseDto> = await api.get(
+  //       `/employee/view/timesheet/${timesheetId}`
+  //     );
+  //     console.log('🧩 Full get timesheet by ID API response:', response.data.response);
+  //     if (response.data.flag && response.data.response) {
+  //       return response.data.response;
+  //     }
+  //     throw new Error(response.data.message || 'Failed to get timesheet by ID');
+  //   } catch (error) {
+  //     console.error('❌ Error fetching timesheet by ID:', error);
+  //     throw new Error(`Failed to get timesheet by ID: ${error}`);
+  //   }
+  // }
 
   /**
    * Get employees by designation (GET with path param).
@@ -277,6 +241,7 @@ class EmployeeService {
       throw new Error(`Failed to get designation list: ${error}`);
     }
   }
+  
 }
 
 export const employeeService = new EmployeeService();

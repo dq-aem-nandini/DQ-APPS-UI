@@ -21,7 +21,15 @@ export type Designation =
 export type LeaveCategoryType = "SICK" | "CASUAL" | "PLANNED" | "UNPLANNED";
 export type FinancialType = "PAID" | "UNPAID";
 export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "WITHDRAWN";
+export type HolidayType = 
+  | 'PUBLIC'
+  | 'RELIGIOUS'
+  | 'REGIONAL'
+  | 'COMPANY_SPECIFIC';
 
+export type RecurrenceRule =
+  | 'ANNUAL'
+  | 'ONE_TIME';
 export interface AddressModel {
   addressId?: string; // uuid
   houseNo?: string;
@@ -219,7 +227,52 @@ export interface BankDetails {
   createdAt: string; // date-time
   updatedAt: string; // date-time
 }
+// From schemas/HolidaySchemeModel
+export interface HolidaySchemeModel {
+  holidayCalendarId?: string; // UUID
+  schemeName?: string;
+  schemeDescription?: string;
+  city?: string;
+  state?: string;
+  schemeCountryCode?: string;
+  activeStatus?: boolean;
+}
 
+// From schemas/HolidayCalendarModel
+export interface HolidayCalendarModel {
+  holidayName?: string;
+  calendarDescription?: string;
+  holidayDate?: string; // Date format (YYYY-MM-DD)
+  locationRegion?: string;
+  holidayType?: HolidayType;
+  recurrenceRule?: RecurrenceRule;
+  calendarCountryCode?: string;
+  activeStatus?: boolean;
+}
+
+// From schemas/HolidayCalendarDTO (used in responses)
+export interface HolidayCalendarDTO {
+  holidayCalendarId: string; // uuid
+  holidayName: string;
+  calendarDescription: string;
+  holidayDate: string; // date
+  locationRegion: string;
+  holidayType: HolidayType;
+  recurrenceRule: RecurrenceRule;
+  calendarCountryCode: string| null;
+  createdByAdminId: string; // uuid
+  holidayActive: boolean;
+}
+
+// From schemas/NotificationDTO
+export interface NotificationDTO {
+  id: string; // UUID
+  message: string;
+  referenceId: string; // UUID
+  read: boolean;
+  createdAt: string; // Date-time
+  updatedAt: string; // Date-time
+}
 // ClientPoc
 export interface ClientPoc {
   pocId: string; // uuid
@@ -421,7 +474,6 @@ export interface LeaveRequestDTO {
   leaveDuration?: number; // double
   fromDate?: string; // date
   toDate?: string; // date
-  subject?: string;
   context?: string;
   attachmentFile?: string; // binary
 }
@@ -437,9 +489,10 @@ export interface LeaveResponseDTO {
   subject?: string;
   context?: string;
   status?: LeaveStatus; // Updated to use LeaveStatus
-  managerComment?: string;
+  approverComment?: string;
   holidays?: number; // int32
   leaveDuration?: number; // double
+  attachmentUrl?: string;
 }
 
 // SortObject
@@ -476,11 +529,11 @@ export interface PageLeaveResponseDTO {
 
 // TimeSheetModel
 export interface TimeSheetModel {
+  timesheetId?: string; // optional, needed for updates
   workDate: string; // date
   hoursWorked: number;
   taskName: string;
   taskDescription: string;
-  status: string;
 }
 
 // TimeSheet
@@ -514,7 +567,11 @@ export interface TimeSheetResponseDto {
   createdAt: string; // date-time
   updatedAt: string; // date-time
 }
-
+export interface EmployeeLeaveDayDTO {
+  date: string; // date
+  leaveCategory: LeaveCategoryType;
+  duration: number; // double
+}
 // WebResponseDTOTimeSheet
 export interface WebResponseDTOTimeSheet {
   flag: boolean;
@@ -524,7 +581,24 @@ export interface WebResponseDTOTimeSheet {
   totalRecords: number; // int64
   otherInfo: Record<string, any>;
 }
-
+// WebResponseDTOHolidayCalendarDTO
+export interface WebResponseDTOHolidayCalendarDTO {
+  flag: boolean;
+  message: string;
+  status: number; // int32
+  response: HolidayCalendarDTO;
+  totalRecords: number; // int64
+ otherInfo?: Record<string, unknown>;
+}
+// WebResponseDTOListNotificationDTO
+export interface WebResponseDTOListNotificationDTO {
+  flag: boolean;
+  message: string;
+  status: number; // int32
+  response: NotificationDTO[]; // array of notification objects
+  totalRecords: number; // int64
+  otherInfo: any;
+}
 // WebResponseDTOListTimeSheetResponseDto
 export interface WebResponseDTOListTimeSheetResponseDto {
   flag: boolean;
@@ -654,28 +728,38 @@ export interface RefreshInnerResponse {
   data: any;
 }
 
-// ManagerLeaveDashboardDTO
-export interface ManagerLeaveDashboardDTO {
-  leaveId?: string; // uuid
-  employeeName?: string;
-  leaveType?: string;
-  leaveDuration?: number; // double
-  reason?: string;
-  attachmentUrl?: string;
-  remainingLeaves?: number; // double, updated to match schema
-  status?: string;
+// PendingLeavesResponseDTO
+export interface PendingLeavesResponseDTO {
+  leaveId: string; // uuid
+  employeeName: string;
+  leaveCategoryType: string;
+  financialType: string;
+  fromDate: string; // date
+  toDate: string; // date
+  leaveDuration: number; // double
+  attachmentUrl: string;
+  remainingLeaves: number; // double
+  context: string;
+  status: string;
 }
 
-// WebResponseDTOListManagerLeaveDashboardDTO
-export interface WebResponseDTOListManagerLeaveDashboardDTO {
-  flag?: boolean;
-  message?: string;
-  status?: number; // int32
-  response?: ManagerLeaveDashboardDTO[];
-  totalRecords?: number; // int64
-  otherInfo?: any;
+// WebResponseDTOListPendingLeavesResponseDTO
+export interface WebResponseDTOListPendingLeavesResponseDTO {
+  flag: boolean;
+  message: string;
+  status: number; // int32
+  response: PendingLeavesResponseDTO[]; // array of leave dashboard items
+  totalRecords: number; // int64
+  otherInfo: any;
 }
-
+export interface WebResponseDTOListEmployeeLeaveDayDTO {
+  flag: boolean;
+  message: string;
+  status: number; // int32
+  response: EmployeeLeaveDayDTO[]; // array of leave day objects
+  totalRecords: number; // int64
+  otherInfo: any;
+}
 // WebResponseDTOMapStringString
 export interface WebResponseDTOMapStringString {
   flag?: boolean;
@@ -700,4 +784,6 @@ export interface WebResponseDTOLeaveAvailabilityDTO
   extends WebResponseDTO<LeaveAvailabilityDTO> {}
 
 export interface WebResponseDTOApiResponseObject
-  extends WebResponseDTO<ApiResponseObject> {}
+  extends WebResponseDTO<ApiResponseObject> {} 
+  // Specific type for WebResponseDTOVoid
+export interface WebResponseDTOVoid extends WebResponseDTO<null> {}

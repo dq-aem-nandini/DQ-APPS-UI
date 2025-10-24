@@ -2,12 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { leaveService } from '@/lib/api/leaveService';
-import { LeaveResponseDTO, PageLeaveResponseDTO, LeaveStatus, LeaveCategoryType, User } from '@/lib/api/types';
+import { LeaveResponseDTO, PageLeaveResponseDTO, LeaveStatus, LeaveCategoryType } from '@/lib/api/types';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import Swal from 'sweetalert2';
 import { ArrowLeft } from 'lucide-react';
 
 const LeaveHistoryPage = () => {
+  const router = useRouter();
+  const { state: { user, accessToken } } = useAuth();
+
   const [leaveHistory, setLeaveHistory] = useState<PageLeaveResponseDTO>({
     totalElements: 0,
     totalPages: 0,
@@ -21,7 +25,6 @@ const LeaveHistoryPage = () => {
     sort: { sorted: true, unsorted: false, empty: false },
     empty: true,
   });
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<{
@@ -40,30 +43,16 @@ const LeaveHistoryPage = () => {
     sort: 'fromDate,desc',
   });
 
-  const router = useRouter();
-
   // Enum values
   const categoryTypes: LeaveCategoryType[] = ['SICK', 'CASUAL', 'PLANNED', 'UNPLANNED'];
 
-  // Fetch authenticated user
-  const fetchUser = useCallback(async () => {
-    try {
-      const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      } else {
-        throw new Error('User not found in localStorage');
-      }
-    } catch (err) {
-      console.error('❌ Error fetching user:', err);
-      setError('Please log in to view leave history.');
-      router.push('/auth/login');
-    }
-  }, [router]);
-
   // Fetch leave history
   const fetchLeaveHistory = useCallback(async () => {
-    if (!user) return;
+    if (!user || !accessToken) {
+      setError('Please log in to view leave history.');
+      router.push('/auth/login');
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -80,14 +69,39 @@ const LeaveHistoryPage = () => {
         pagination.size,
         pagination.sort
       );
-      setLeaveHistory(response);
-    } catch (err) {
+      console.log('🧩 Leave History Response:', response);
+      if (!response.flag || !response.response) {
+        throw new Error(
+          response.message.includes('assignedManager')
+            ? 'Unable to load leave history. Some employees may not have assigned managers. Please check employee settings or contact support.'
+            : response.message || 'Failed to fetch leave history'
+        );
+      }
+      setLeaveHistory(response.response);
+    } catch (err: any) {
       console.error('❌ Error fetching leave history:', err);
-      setError('Failed to load leave history. Please try again.');
+      setError(
+        err.message.includes('assignedManager')
+          ? 'Unable to load leave history. Some employees may not have assigned managers. Please check employee settings or contact support.'
+          : err.message || 'Failed to load leave history. Please try again.'
+      );
+      setLeaveHistory({
+        totalElements: 0,
+        totalPages: 0,
+        first: true,
+        last: true,
+        numberOfElements: 0,
+        pageable: { paged: true, unpaged: false, pageNumber: 0, pageSize: 5, offset: 0, sort: { sorted: true, unsorted: false, empty: false } },
+        size: 5,
+        content: [],
+        number: 0,
+        sort: { sorted: true, unsorted: false, empty: false },
+        empty: true,
+      });
     } finally {
       setLoading(false);
     }
-  }, [user, filters, pagination]);
+  }, [user, accessToken, filters, pagination, router]);
 
   // Handle withdraw leave request with SweetAlert2
   const handleWithdrawLeave = async (leaveId: string) => {
@@ -125,11 +139,11 @@ const LeaveHistoryPage = () => {
             htmlContainer: 'text-gray-600',
           },
         });
-      } catch (err) {
+      } catch (err: any) {
         console.error('❌ Error withdrawing leave:', err);
         Swal.fire({
           title: 'Error',
-          text: 'Failed to withdraw leave request. Please try again.',
+          text: err.message || 'Failed to withdraw leave request. Please try again.',
           icon: 'error',
           customClass: {
             popup: 'rounded-lg shadow-xl p-6 bg-white',
@@ -143,20 +157,14 @@ const LeaveHistoryPage = () => {
 
   // Handle pagination changes
   const handlePageChange = (newPage: number) => {
-    if (newPage < 0) return;
+    if (newPage < 0 || newPage >= leaveHistory.totalPages) return;
     setPagination((prev) => ({ ...prev, page: newPage }));
   };
 
-  // Initial fetch for user and leave history
+  // Initial fetch for leave history
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  useEffect(() => {
-    if (user) {
-      fetchLeaveHistory();
-    }
-  }, [user, fetchLeaveHistory]);
+    fetchLeaveHistory();
+  }, [fetchLeaveHistory]);
 
   // Handle filter changes
   const handleFilterChange = (key: keyof typeof filters, value: string | boolean | undefined) => {
@@ -182,6 +190,11 @@ const LeaveHistoryPage = () => {
     const capitalized = words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     return isCategory ? `${capitalized} Leave` : capitalized;
   };
+
+  if (!user || !accessToken) {
+    router.push('/auth/login');
+    return null;
+  }
 
   if (error) {
     return (
@@ -312,13 +325,13 @@ const LeaveHistoryPage = () => {
                 leaveHistory.content.map((leave: LeaveResponseDTO) => (
                   <tr key={leave.leaveId} className="hover:bg-gray-50 transition duration-200">
                     <td className="px-4 py-5 text-base text-gray-900">{leave.approverName || '-'}</td>
-                    <td className="px-4 py-5 text-base text-gray-900">{leave.leaveCategoryType}</td>
-                    <td className="px-4 py-5 text-base text-gray-900">{leave.status}</td>
-                    <td className="px-4 py-5 text-base text-gray-900">{leave.fromDate}</td>
-                    <td className="px-4 py-5 text-base text-gray-900">{leave.toDate}</td>
-                    <td className="px-4 py-5 text-base text-gray-900">{leave.leaveDuration}</td>
+                    <td className="px-4 py-5 text-base text-gray-900">{leave.leaveCategoryType ? getLabel(leave.leaveCategoryType, true) : '-'}</td>
+                    <td className="px-4 py-5 text-base text-gray-900">{leave.status || '-'}</td>
+                    <td className="px-4 py-5 text-base text-gray-900">{leave.fromDate ? new Date(leave.fromDate).toLocaleDateString() : '-'}</td>
+                    <td className="px-4 py-5 text-base text-gray-900">{leave.toDate ? new Date(leave.toDate).toLocaleDateString() : '-'}</td>
+                    <td className="px-4 py-5 text-base text-gray-900">{leave.leaveDuration ? `${leave.leaveDuration} days` : '-'}</td>
                     <td className="px-4 py-5 text-base text-gray-900">{leave.context || '-'}</td>
-                    <td className="px-4 py-5 text-base text-gray-900">{leave.managerComment || '-'}</td>
+                    <td className="px-4 py-5 text-base text-gray-900">{leave.approverComment || '-'}</td>
                     <td className="px-4 py-5 text-base text-gray-900">
                       {leave.status === 'PENDING' && (
                         <div className="flex gap-2">
@@ -361,7 +374,7 @@ const LeaveHistoryPage = () => {
           Previous
         </button>
         <span className="text-gray-600">
-          Page {pagination.page + 1} of {leaveHistory.totalPages}
+          Page {pagination.page + 1} of {leaveHistory.totalPages || 1}
         </span>
         <button
           disabled={leaveHistory.last}
