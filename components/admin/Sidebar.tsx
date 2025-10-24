@@ -48,10 +48,10 @@ const Sidebar = () => {
       match: /^\/admin-dashboard\/profile/,
     },
     {
-      href: "/admin-dashboard/apply-leave",
-      label: "Apply Leave",
+      href: "/admin-dashboard/leaves",
+      label: "Leaves",
       icon: CalendarIcon,
-      match: /^\/admin-dashboard\/apply-leave/,
+      match: /^\/admin-dashboard\/leaves/,
     },
     {
       href: "/admin-dashboard/apply-special-requests",
@@ -64,6 +64,12 @@ const Sidebar = () => {
       label: "Overtime",
       icon: ClockIcon,
       match: /^\/admin-dashboard\/apply-overtime/,
+    },
+    {
+      href: "/admin-dashboard/holiday",
+      label: "Holiday",
+      icon: PlusIcon,
+      match: /^\/admin-dashboard\/holiday/,
     },
     {
       href: "/admin-dashboard/settings",

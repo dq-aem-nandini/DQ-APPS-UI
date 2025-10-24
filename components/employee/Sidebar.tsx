@@ -23,15 +23,15 @@ const navSections = [
     title: 'Main',
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: <Home size={18} /> },
-      { href: '/dashboard/timesheet/register', label: 'Timesheet', icon: <Clock size={18} /> },
+      { href: '/dashboard/TimeSheetRegister', label: 'Timesheet', icon: <Clock size={18} /> },
       { href: '/dashboard/projects', label: 'Projects', icon: <Briefcase size={18} /> },
     ],
   },
   {
     title: 'HR & Leaves',
     items: [
-      { href: '/dashboard/leaves/dashboard', label: 'Leaves', icon: <FileCheck size={18} /> },
-      { href: '/dashboard/holidays', label: 'Holidays', icon: <Gift size={18} /> },
+      { href: '/dashboard/leaves', label: 'Leaves', icon: <FileCheck size={18} /> },
+      { href: '/dashboard/holiday', label: 'Holidays', icon: <Gift size={18} /> },
       { href: '/dashboard/calendar', label: 'Calendar', icon: <Calendar size={18} /> },
       { href: '/dashboard/payroll', label: 'Payroll', icon: <FileText size={18} /> },
       { href: '/dashboard/team', label: 'Team', icon: <Users size={18} /> },

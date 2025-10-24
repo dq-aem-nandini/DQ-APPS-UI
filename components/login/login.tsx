@@ -14,44 +14,57 @@ const Login: React.FC = () => {
   const { login, state } = useAuth();
   const router = useRouter();
 
-  // Auto-redirect if already authenticated (handles direct nav to login or post-login re-render)
+  // Handle authenticated user redirect
   useEffect(() => {
-    if (state.isAuthenticated && state.user) {
-      console.log('Auto-redirecting based on updated state:', state.user.role); // Debug
+    if (state.isAuthenticated && state.user && !state.isLoading) {
+      console.log('🧩 Auto-redirecting based on updated state:', {
+        role: state.user.role,
+        userId: state.user.userId,
+      });
       const path = state.user.role === 'EMPLOYEE' ? '/dashboard' :
                    state.user.role === 'ADMIN' ? '/admin-dashboard' :
-                                    '/client-dashboard';  // Default fallback
-
+                   state.user.role === 'MANAGER' ? '/manager' :
+                   state.user.role === 'CLIENT' ? '/client-dashboard' :
+                   '/auth/login'; // Fallback for undefined/invalid roles
+      console.log('🧩 Redirecting to:', path);
       router.push(path);
     }
-  }, [state.isAuthenticated, state.user?.role, router]);  // Added role to deps for precision
+  }, [state.isAuthenticated, state.user, state.isLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     try {
+      console.log('🧩 Attempting login with credentials:', credentials.inputKey);
       await login(credentials);
-      // NO REDIRECT HERE—let useEffect handle it after state updates
-      console.log('Login API succeeded, waiting for state update...'); // Debug
-    } catch (err: unknown) {
-      console.error('Login error:', err); // Debug
-      if (err instanceof Error) {
-        setError(err.message || 'Invalid username or password. Please try again.');
-      } else {
-        setError(String(err) || 'Invalid username or password. Please try again.');
-      }
+      console.log('🧩 Login API succeeded, waiting for state update...');
+    } catch (err: any) {
+      console.error('❌ Login error:', err);
+      setError(err.message || 'Invalid username or password. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Show a brief "Redirecting..." if authenticated but still on page (post-login bridge)
-  if (state.isAuthenticated && state.user && isLoading === false) {
+  if (state.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-blue-50 px-4">
         <div className="text-center">
-          <p className="text-lg text-gray-600">Redirecting to dashboard...</p>
+          <svg
+            className="animate-spin h-8 w-8 text-indigo-600 mx-auto"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <p className="text-lg text-gray-600 mt-4">Loading...</p>
         </div>
       </div>
     );
@@ -61,7 +74,6 @@ const Login: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-blue-50 px-4">
       <div className="w-full max-w-md bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl border border-indigo-100 p-8 transition-all">
         <div className="text-center">
-          {/* DigiQuad Logo */}
           <div className="flex justify-center mb-4">
             <Image
               src="/digiquad logo.jpeg"
@@ -71,12 +83,10 @@ const Login: React.FC = () => {
               className="rounded-full shadow-sm"
             />
           </div>
-
           <h1 className="text-3xl font-extrabold text-gray-900 mb-5">Welcome to DigiQuad</h1>
         </div>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
-          {/* Username / Email */}
           <div>
             <label htmlFor="inputKey" className="block text-sm font-medium text-gray-700 mb-2">
               Username or Email
@@ -93,7 +103,6 @@ const Login: React.FC = () => {
             />
           </div>
 
-          {/* Password */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
               Password
@@ -136,14 +145,12 @@ const Login: React.FC = () => {
             </div>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
               {error}
             </div>
           )}
 
-          {/* Remember + Forgot */}
           <div className="flex items-center justify-between">
             <label className="flex items-center space-x-2 text-sm text-gray-700">
               <input
@@ -159,7 +166,6 @@ const Login: React.FC = () => {
             </Link>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading || state.isLoading}
@@ -188,7 +194,6 @@ const Login: React.FC = () => {
           </button>
         </form>
 
-        {/* Footer */}
         <p className="text-center text-xs text-gray-500 mt-6">
           © {new Date().getFullYear()} <span className="font-semibold text-indigo-600">DigiQuad Technologies</span>. All rights reserved.
         </p>
