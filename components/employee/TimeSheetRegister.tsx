@@ -1,235 +1,253 @@
-// components/dashboard/TimeSheetRegister.tsx
 'use client';
 
-import { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import { employeeService } from '@/lib/api/employeeService';
-import { TimeSheetModel } from '@/lib/api/types';
+import { useEffect, useState, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { employeeService } from "@/lib/api/employeeService";
+import { TimeSheetModel, TimeSheetResponse } from "@/lib/api/types";
+import dayjs from "dayjs";
 
-const TimeSheetRegister: React.FC = () => {
-  const { state } = useAuth();
-  console.log('Auth state:', state);
-  const [formData, setFormData] = useState<TimeSheetModel>({
-    workDate: '',
-    hoursWorked: 0,
-    taskName: '',
-    taskDescription: '',
-    status: 'SUBMITTED',
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+const TimeSheetRegister: React.FC<{ userId?: string }> = ({ userId: propUserId }) => {
+  const joiningDate = dayjs("2024-04-10");
+  const today = dayjs();
+  
+  const { state: authState } = useAuth();
+  const userId = propUserId ?? authState.user?.userId ?? null;
+  
+  const [weekStart, setWeekStart] = useState(dayjs().startOf("week"));
+  const [weekEnd, setWeekEnd] = useState(dayjs().endOf("week"));
+  const [timeSheets, setTimeSheets] = useState<TimeSheetResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setIsLoading(true);
-
+  const fetchData = useCallback(async () => {
+    if (!userId) {
+      console.warn('No userId provided to TimeSheetRegister; skipping fetch.');
+      return;
+    }
     try {
-      const timeSheet = await employeeService.registerTimeSheet(formData);
-      setSuccess('Time Sheet is created Successfully');
-      setFormData({
-        workDate: '',
-        hoursWorked: 0,
-        taskName: '',
-        taskDescription: '',
-        status: 'SUBMITTED',
+      setLoading(true);
+      const startDate = weekStart.format("YYYY-MM-DD");
+      const endDate = weekEnd.format("YYYY-MM-DD");
+      const list = await employeeService.viewTimeSheet(startDate, endDate);
+
+      // Build a 7-day array for the week and merge existing entries
+      const fullWeek = Array.from({ length: 7 }).map((_, i) => {
+        const date = weekStart.add(i, 'day').format('YYYY-MM-DD');
+        const existing = list.find((ts) => ts.workDate === date);
+        return (
+          existing || {
+            timesheetId: "",
+            workDate: date,
+            taskName: "",
+            taskDescription: "",
+            hoursWorked: 0,
+            status: "",
+          }
+        );
       });
-    } catch (err: any) {
-      setError(err.message || 'Failed to register timesheet. Please try again.');
+
+      setTimeSheets(fullWeek);
+    } catch (e) {
+      console.error('Error fetching timesheets:', e);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+    }
+  }, [userId, weekStart, weekEnd]);
+
+  useEffect(() => {
+    if (authState.isLoading) return;        // wait until auth init done
+    if (!userId) {
+      console.warn('No userId provided to TimeSheetRegister; skipping fetch.');
+      return;
+    }
+
+    fetchData();
+  }, [authState.isLoading, fetchData, userId]);
+
+  const handlePrevWeek = () => {
+    const newStart = weekStart.subtract(1, "week");
+    const newEnd = weekEnd.subtract(1, "week");
+    if (newStart.isBefore(joiningDate)) return;
+    setWeekStart(newStart);
+    setWeekEnd(newEnd);
+  };
+
+  const handleNextWeek = () => {
+    const newStart = weekStart.add(1, "week");
+    const newEnd = weekEnd.add(1, "week");
+    if (newEnd.isAfter(today)) return;
+    setWeekStart(newStart);
+    setWeekEnd(newEnd);
+  };
+
+  // Create empty rows for all 7 days of the week (Sat & Sun included)
+  const allDays = Array.from({ length: 7 }).map((_, i) => {
+    const date = weekStart.add(i, "day");
+    const existing = timeSheets.find(ts => dayjs(ts.workDate).isSame(date, "day"));
+    return (
+      existing || {
+        timesheetId: "",
+        workDate: date.format("YYYY-MM-DD"),
+        taskName: "",
+        taskDescription: "",
+        hoursWorked: 0,
+        status: "",
+      }
+    );
+  });
+
+// const handleChange = (index: number, field: string, value: string | number) => {
+  //   const updated = [...allDays];
+    
+  //   updated[index][field] = value;
+  //   setTimeSheets(updated);
+  // };
+
+
+  const handleChange = (index: number, field: keyof TimeSheetResponse, value: string | number) => {
+    // Ensure we have a full-week editable array
+    const updatedWeek = Array.from({ length: 7 }).map((_, i) => {
+      const date = weekStart.add(i, 'day').format('YYYY-MM-DD');
+      const existing = timeSheets.find(ts => ts.workDate === date);
+      return (
+        existing || {
+          timesheetId: "",
+          workDate: date,
+          taskName: "",
+          taskDescription: "",
+          hoursWorked: 0,
+          status: "",
+        }
+      );
+    });
+
+    const updatedItem = { ...updatedWeek[index], [field]: value } as TimeSheetResponse;
+    updatedWeek[index] = updatedItem;
+    setTimeSheets(updatedWeek);
+  };
+
+ 
+  const handleSave = async (entry: TimeSheetResponse | TimeSheetModel) => {
+    try {
+      if ((entry.taskName ?? "").trim() === "") {
+        alert("Task name cannot be empty");
+        return;
+      }
+      setLoading(true);
+
+      // If timesheetId exists -> update, else register
+      if ((entry as TimeSheetResponse).timesheetId) {
+        await employeeService.updateTimeSheet(entry as TimeSheetModel);
+      } else {
+        await employeeService.registerTimeSheet(entry as TimeSheetModel);
+      }
+
+      await fetchData();
+      setEditingId(null);
+    } catch (err) {
+      console.error("Error saving timesheet:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === 'hoursWorked' ? parseFloat(value) || 0 : value,
-    }));
-  };
-
   return (
-    <ProtectedRoute allowedRoles={['EMPLOYEE']}>
-      <div className="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg ring-1 ring-black ring-opacity-5">
-          <div className="text-center">
-            <div className="mx-auto h-12 w-12 bg-indigo-100 rounded-full flex items-center justify-center">
-              <svg
-                className="h-6 w-6 text-indigo-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <h2 className="mt-6 text-3xl font-bold text-gray-900">Register Timesheet</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Submit your timesheet details for {state.user?.userName || 'Employee'}
-            </p>
-          </div>
+    <div className="p-6">
+      <h2 className="text-lg font-semibold mb-4">Weekly Timesheet Register</h2>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="workDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  Work Date
-                </label>
-                <input
-                  id="workDate"
-                  name="workDate"
-                  type="date"
-                  required
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-200 ease-in-out"
-                  value={formData.workDate}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="hoursWorked"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Hours Worked
-                </label>
-                <input
-                  id="hoursWorked"
-                  name="hoursWorked"
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  required
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-200 ease-in-out"
-                  placeholder="Enter hours worked"
-                  value={formData.hoursWorked}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="taskName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Task Name
-                </label>
-                <input
-                  id="taskName"
-                  name="taskName"
-                  type="text"
-                  required
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-200 ease-in-out"
-                  placeholder="Enter task name"
-                  value={formData.taskName}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="taskDescription"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Task Description
-                </label>
-                <textarea
-                  id="taskDescription"
-                  name="taskDescription"
-                  required
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-200 ease-in-out"
-                  placeholder="Enter task description"
-                  value={formData.taskDescription}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                  rows={4}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  required
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-200 ease-in-out"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                >
-                  <option value="SUBMITTED">Submitted</option>
-                  <option value="DRAFT">Draft</option>
-                  <option value="APPROVED">Approved</option>
-                  <option value="REJECTED">Rejected</option>
-                </select>
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md text-sm">
-                {success}
-              </div>
-            )}
-
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98]"
-              >
-                {isLoading ? (
-                  <span className="flex items-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Submitting...
-                  </span>
-                ) : (
-                  'Submit Timesheet'
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
+      <div className="flex items-center gap-3 mb-3">
+        <button onClick={handlePrevWeek} className="px-3 py-1 bg-gray-200 rounded">←</button>
+        <span>
+          {weekStart.format("MMM DD")} - {weekEnd.format("MMM DD, YYYY")}
+        </span>
+        <button onClick={handleNextWeek} className="px-3 py-1 bg-gray-200 rounded">→</button>
       </div>
-    </ProtectedRoute>
+
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <table className="w-full border-collapse border text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border p-2">Date</th>
+              <th className="border p-2">Task</th>
+              <th className="border p-2">Description</th>
+              <th className="border p-2">Hours</th>
+              <th className="border p-2">Status</th>
+              <th className="border p-2">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {allDays.map((entry, i) => {
+              const isSubmitted = String(entry.status ?? '').toLowerCase() === 'submitted';
+              const statusOptions = [
+                'SUBMITTED',
+              ];
+
+              return (
+                <tr key={entry.workDate}>
+                  <td className="border p-2">{dayjs(entry.workDate).format('ddd, DD MMM')}</td>
+                  <td className="border p-2">
+                    <input
+                      type="text"
+                      value={entry.taskName}
+                      disabled={isSubmitted}
+                      onChange={(e) => handleChange(i, 'taskName', e.target.value)}
+                      className="border p-1 rounded w-full"
+                    />
+                  </td>
+                  <td className="border p-2">
+                    <input
+                      type="text"
+                      value={entry.taskDescription}
+                      disabled={isSubmitted}
+                      onChange={(e) => handleChange(i, 'taskDescription', e.target.value)}
+                      className="border p-1 rounded w-full"
+                    />
+                  </td>
+                  <td className="border p-2">
+                    <input
+                      type="number"
+                      value={entry.hoursWorked}
+                      disabled={isSubmitted}
+                      onChange={(e) => handleChange(i, 'hoursWorked', Number(e.target.value))}
+                      className="border p-1 rounded w-20"
+                    />
+                  </td>
+                  <td className="border p-2">
+                    <select
+                      value={entry.status}
+                      onChange={(e) => handleChange(i, 'status', e.target.value)}
+                      className="border p-1 rounded"
+                      disabled={false}
+                    >
+                      {statusOptions.map((opt) => (
+                        <option key={opt} value={opt === '-select-' ? '' : opt} disabled={opt === '-select-'}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="border p-2">
+                    <button
+                      onClick={() => handleSave(entry)}
+                      disabled={isSubmitted}
+                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                    >
+                      {entry.timesheetId ? 'Update' : 'Save'}
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 };
 
 export default TimeSheetRegister;
+
+
+

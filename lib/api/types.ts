@@ -88,8 +88,8 @@ export interface TokenResponseData {
   refreshExpiresAt?: string; // date-time
   tokenType?: string;
 }
-
-export interface ApiResponseObject<T = any> {
+ 
+export interface ApiResponseObject<T = unknown> {
   data: T;
   message: string;
 }
@@ -495,11 +495,9 @@ export interface LeaveResponseDTO {
   attachmentUrl?: string;
 }
 
-// SortObject
-export interface SortObject {
-  sorted: boolean;
-  unsorted: boolean;
-  empty: boolean;
+export interface LoginInnerResponse {
+  data: LoginResponseInner;
+  message?: string;
 }
 
 // PageableObject
@@ -527,7 +525,6 @@ export interface PageLeaveResponseDTO {
   empty: boolean;
 }
 
-// TimeSheetModel
 export interface TimeSheetModel {
   timesheetId?: string; // optional, needed for updates
   workDate: string; // date
@@ -536,20 +533,19 @@ export interface TimeSheetModel {
   taskDescription: string;
 }
 
-// TimeSheet
+// Used when fetching timesheet details (single record returned by some endpoints)
 export interface TimeSheet {
   timesheetId: string; // uuid
-  employee?: Employee; // Optional for some responses
-  workDate: string; // date
+  workDate: string;
   hoursWorked: number;
   taskName: string;
   taskDescription: string;
   status: string;
-  createdAt: string; // date-time
-  updatedAt: string; // date-time
+  createdAt: string;
+  updatedAt: string;
 }
 
-// TimeSheetResponseDto
+// Backend DTO returned by the employee view timesheet list
 export interface TimeSheetResponseDto {
   timesheetId: string; // uuid
   clientId: string; // uuid

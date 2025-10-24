@@ -7,9 +7,9 @@ export const authService = {
     credentials: LoginRequest
   ): Promise<{ user: User; accessToken?: string; refreshToken?: string }> {
     const params = new URLSearchParams();
-    Object.keys(credentials).forEach((key) => {
-      params.append(key, (credentials as any)[key]);
-    });
+    // Explicitly append known fields to avoid `any` casts
+    if (credentials.inputKey) params.append('inputKey', credentials.inputKey);
+    if (credentials.password) params.append('password', credentials.password);
 
     // ✅ Send credentials as query params per backend requirement
     const response = await api.post<WebResponseDTO<LoginInnerResponse>>(
@@ -20,7 +20,7 @@ export const authService = {
     console.log("🧩 Full login API response:", response.data.response?.data);
 
     if (response.data.flag && response.data.response?.data) {
-      const innerData = response.data.response.data;
+      const innerData = response.data.response.data as LoginResponseInner;
 
       // ✅ Detect role from the loginResponseDTO
       const loginResp = innerData.loginResponseDTO;
