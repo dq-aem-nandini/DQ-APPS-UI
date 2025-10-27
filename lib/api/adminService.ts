@@ -13,6 +13,8 @@ import {
   WebResponseDTOEmployee,
   WebResponseDTOTimeSheetResponseDto,
   WebResponseDTOListTimeSheetResponseDto,
+  EmployeeDTO,
+  WebResponseDTO,
 } from './types';
 import { AxiosResponse } from 'axios';
 
@@ -140,7 +142,27 @@ class AdminService {
       throw new Error(`Failed to get all employees: ${error}`);
     }
   }
-
+   // Get all employees
+   async getAllManagerEmployees(): Promise<WebResponseDTOListEmployeeDTO> {
+    try {
+      const response: AxiosResponse<WebResponseDTOListEmployeeDTO> = await api.get(
+        '/employee/manager/employees'
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get all employees: ${error}`);
+    }
+  }
+  async getEmployeesByDesignation(designation: string): Promise<WebResponseDTOListEmployeeDTO> {
+    try {
+      const response: AxiosResponse<WebResponseDTOListEmployeeDTO> = await api.get(
+        `/admin/emp/designation/${designation}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get employees by designation: ${error}`);
+    }
+  }
   // Unassign employee from client
   async unassignEmployeeFromClient(empId: string): Promise<WebResponseDTOString> {
     try {

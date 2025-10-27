@@ -1,6 +1,6 @@
 // lib/api/authService.ts
 import api from "./axios";
-import { LoginRequest, User, WebResponseDTO, LoginInnerResponse, RefreshTokenResponseDTO } from "./types";
+import { LoginRequest, User, WebResponseDTO, LoginInnerResponse, RefreshTokenResponseDTO, LoginResponseInner } from "./types";
 
 export const authService = {
   async login(
