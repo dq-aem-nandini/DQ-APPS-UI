@@ -16,6 +16,7 @@ import {
   EmployeeDTO,
   WebResponseDTO,
   Designation,
+  ClientDTO,
 } from './types';
 import { AxiosResponse } from 'axios';
 
@@ -47,30 +48,88 @@ class AdminService {
   }
 
   // Update client
-  async updateClient(clientId: string, clientModel: ClientModel): Promise<WebResponseDTOString> {
-    try {
-      const response: AxiosResponse<WebResponseDTOString> = await api.put(
-        `/admin/updateclient/${clientId}`,
-        clientModel
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(`Failed to update client: ${error}`);
-    }
-  }
+  // async updateClient(clientId: string, clientModel: ClientModel): Promise<WebResponseDTOString> {
+  //   try {
+  //     const response: AxiosResponse<WebResponseDTOString> = await api.put(
+  //       `/admin/updateclient/${clientId}`,
+  //       clientModel
+  //     );
+  //     return response.data;
+  //   } catch (error) {
+  //     throw new Error(`Failed to update client: ${error}`);
+  //   }
+  // }
+  // Update client
+  
+async updateClient(clientId: string, clientModel: ClientModel): Promise<WebResponseDTOString> {
+  console.log(`📝 [updateClient] Updating client with ID: ${clientId}`);
+  console.log("📤 [updateClient] Payload:", clientModel);
 
-  // Update employee
-  async updateEmployee(empId: string, employee: EmployeeModel): Promise<WebResponseDTOString> {
-    try {
-      const response: AxiosResponse<WebResponseDTOString> = await api.put(
-        `/admin/updateemp/${empId}`,
-        employee
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(`Failed to update employee: ${error}`);
+  try {
+    const response: AxiosResponse<WebResponseDTOString> = await api.put(
+      `/admin/updateclient/${clientId}`,
+      clientModel
+    );
+
+    console.log("✅ [updateClient] API Response:", response.data);
+
+    if (response.data?.response) {
+      console.log("📦 [updateClient] Server Message:", response.data.response);
     }
+
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ [updateClient] Failed to update client:", error?.message || error);
+
+    if (error.response) {
+      console.error("🚨 [updateClient] Server Error Response:", error.response.data);
+      console.error("🔗 [updateClient] Endpoint:", error.config?.url);
+      console.error("📄 [updateClient] Status Code:", error.response.status);
+    }
+
+    throw new Error(`Failed to update client: ${error}`);
   }
+}
+
+
+  // // Update employee
+  // async updateEmployee(empId: string, employee: EmployeeModel): Promise<WebResponseDTOString> {
+  //   try {
+  //     const response: AxiosResponse<WebResponseDTOString> = await api.put(
+  //       `/admin/updateemp/${empId}`,
+  //       employee
+  //     );
+  //     return response.data;
+  //   } catch (error) {
+  //     throw new Error(`Failed to update employee: ${error}`);
+  //   }
+  // }
+  // Update employee
+async updateEmployee(empId: string, employee: EmployeeModel): Promise<WebResponseDTOString> {
+  try {
+    // ✅ Flatten arrays to match backend expectations
+    const payload = {
+      ...employee,
+      employeeEquipmentDTO: Array.isArray(employee.employeeEquipmentDTO)
+        ? employee.employeeEquipmentDTO[0]
+        : employee.employeeEquipmentDTO || null,
+
+      employeeAdditionalDetailsDTO: Array.isArray(employee.employeeAdditionalDetailsDTO)
+        ? employee.employeeAdditionalDetailsDTO[0]
+        : employee.employeeAdditionalDetailsDTO || null,
+    };
+
+    const response: AxiosResponse<WebResponseDTOString> = await api.put(
+      `/admin/updateemp/${empId}`,
+      payload
+    );
+
+    return response.data;
+  } catch (error) {
+    throw new Error(`Failed to update employee: ${error}`);
+  }
+}
+
 
   // Delete client by ID
   async deleteClientById(clientId: string): Promise<WebResponseDTOString> {
@@ -97,18 +156,44 @@ class AdminService {
   }
 
   // Get client by ID
-  async getClientById(clientId: string): Promise<WebResponseDTOClientDTO> {
-    try {
-      const response: AxiosResponse<WebResponseDTOClientDTO> = await api.get(
-        `/admin/client/${clientId}`
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(`Failed to get client by ID: ${error}`);
-    }
-  }
+  // async getClientById(clientId: string): Promise<WebResponseDTOClientDTO> {
+  //   try {
+  //     const response: AxiosResponse<WebResponseDTOClientDTO> = await api.get(
+  //       `/admin/client/${clientId}`
+  //     );
+  //     return response.data;
+  //   } catch (error) {
+  //     throw new Error(`Failed to get client by ID: ${error}`);
+  //   }
+  // }
+  // Get client by ID
+async getClientById(clientId: string): Promise<WebResponseDTOClientDTO> {
+  console.log(`🔍 [getClientById] Fetching client details for ID: ${clientId}`);
 
-  // Get all clients
+  try {
+    const response: AxiosResponse<WebResponseDTOClientDTO> = await api.get(
+      `/admin/client/${clientId}`
+    );
+
+    console.log("✅ [getClientById] API Response:", response.data);
+
+    // Optionally log specific nested data for clarity
+    if (response.data?.response) {
+      console.log("📦 Client Details:", response.data.response);
+    }
+
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ [getClientById] Failed to fetch client:", error?.message || error);
+    if (error.response) {
+      console.error("🚨 [getClientById] Server Response:", error.response.data);
+    }
+    throw new Error(`Failed to get client by ID: ${error}`);
+  }
+}
+
+
+  // // Get all clients
   async getAllClients(): Promise<WebResponseDTOListClientDTO> {
     try {
       const response: AxiosResponse<WebResponseDTOListClientDTO> = await api.get(

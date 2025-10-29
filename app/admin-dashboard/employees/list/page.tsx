@@ -8,6 +8,7 @@ import { EmployeeDTO } from '@/lib/api/types';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Swal from 'sweetalert2';
+import BackButton from '@/components/ui/BackButton';
 
 const EmployeeList = () => {
   const [employees, setEmployees] = useState<EmployeeDTO[]>([]);
@@ -29,7 +30,7 @@ const EmployeeList = () => {
           // Filter to show only ACTIVE employees
           const activeEmployees = response.response.filter((emp: EmployeeDTO) => emp.status === 'ACTIVE');
           setEmployees(activeEmployees);
-  
+
           // Extract unique designations
           const uniqueDesignations = [...new Set(
             activeEmployees.map((emp: EmployeeDTO) => emp.designation)
@@ -159,16 +160,31 @@ const EmployeeList = () => {
   if (loading) {
     return (
       <ProtectedRoute allowedRoles={['ADMIN']}>
-        <div className="p-8 text-center">Loading employees...</div>
+        <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
+          {/* Tailwind spinner */}
+          <div className="w-12 h-12 border-4 border-indigo-300 border-t-indigo-600 rounded-full animate-spin"></div>
+          <p className="text-gray-700 text-lg font-medium">Loading employees...</p>
+        </div>
       </ProtectedRoute>
     );
   }
 
+
   return (
     <ProtectedRoute allowedRoles={['ADMIN']}>
       <div className="p-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Employee List (Active Only)</h2>
+      
+        <div className="relative flex items-center justify-center mb-8">
+          <div className="absolute left-0">
+            <BackButton  />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          Employee List
+          </h1>
+        </div>
+
+        <div className="flex justify-end items-center mb-6">
+        
           <Link
             href="/admin-dashboard/employees/add"
             className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
@@ -217,31 +233,31 @@ const EmployeeList = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('firstName')}
                   >
                     Name {getSortIcon('firstName')}
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('companyEmail')}
                   >
                     Email {getSortIcon('companyEmail')}
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('clientName')}
                   >
                     Client {getSortIcon('clientName')}
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('designation')}
                   >
                     Designation {getSortIcon('designation')}
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('status')}
                   >
@@ -264,7 +280,7 @@ const EmployeeList = () => {
                         {employee.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       <Link href={`/admin-dashboard/employees/${employee.employeeId}`} className="text-indigo-600 hover:text-indigo-900">View</Link>
                       <Link href={`/admin-dashboard/employees/${employee.employeeId}/edit`} className="text-indigo-600 hover:text-indigo-900">Edit</Link>
                       <button 
@@ -274,7 +290,41 @@ const EmployeeList = () => {
                       >
                         {deletingId === employee.employeeId ? 'Deleting...' : 'Delete'}
                       </button>
+                    </td> */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3 flex items-center">
+                      {/* View Button */}
+                      <Link
+                        href={`/admin-dashboard/employees/${employee.employeeId}`}
+                        className="text-indigo-600 hover:text-indigo-900 transition"
+                      >
+                        View
+                      </Link>
+
+                      {/* Edit Button */}
+                      <Link
+                        href={`/admin-dashboard/employees/${employee.employeeId}/edit`}
+                        className="text-indigo-600 hover:text-indigo-900 transition"
+                      >
+                        Edit
+                      </Link>
+
+                      {/* Delete Button with Spinner */}
+                      <button
+                        onClick={() => handleDelete(employee.employeeId)}
+                        disabled={deletingId === employee.employeeId}
+                        className="relative inline-flex items-center text-red-600 hover:text-red-900 disabled:opacity-50 transition"
+                      >
+                        {deletingId === employee.employeeId ? (
+                          <>
+                            <span className="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin mr-2"></span>
+                            Deleting...
+                          </>
+                        ) : (
+                          'Delete'
+                        )}
+                      </button>
                     </td>
+
                   </tr>
                 ))}
               </tbody>

@@ -21,6 +21,7 @@ import {
 } from '@/lib/api/types';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Swal from 'sweetalert2';
+import BackButton from '@/components/ui/BackButton';
 
 interface Client {
   id: string;
@@ -484,7 +485,14 @@ const AddEmployeePage = () => {
     <ProtectedRoute allowedRoles={['ADMIN']}>
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Add Employee</h2>
+        <div className="relative flex items-center justify-center mb-8">
+          <div className="absolute left-0">
+            <BackButton  />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          Add Employee
+          </h1>
+        </div>
           <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
             {/* Personal Details */}
             <div className="border-b border-gray-200 pb-6">
@@ -751,78 +759,140 @@ const AddEmployeePage = () => {
                     name="employeeEmploymentDetailsDTO.department"
                     value={formData.employeeEmploymentDetailsDTO?.department || ''}
                     onChange={handleChange}
+                       placeholder="e.g. Engineering"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
-                <div>
-                  <label htmlFor="employeeEmploymentDetailsDTO.location" className="block text-sm font-medium text-gray-700 mb-2">
-                    Location
+ {/* Shift Timing */}
+ <div>
+                  <label htmlFor="shiftTiming" className="block text-sm font-medium text-gray-700 mb-2">
+                    Shift Timing
                   </label>
                   <input
                     type="text"
-                    id="employeeEmploymentDetailsDTO.location"
-                    name="employeeEmploymentDetailsDTO.location"
-                    value={formData.employeeEmploymentDetailsDTO?.location || ''}
+                    id="shiftTiming"
+                    name="employeeEmploymentDetailsDTO.shiftTiming"
+                    value={formData.employeeEmploymentDetailsDTO?.shiftTiming || ''}
                     onChange={handleChange}
+                    placeholder="e.g. 9:00 AM - 6:00 PM"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
+
+                {/* Notice Period Duration */}
                 <div>
-                  <label htmlFor="employeeEmploymentDetailsDTO.probationApplicable" className="block text-sm font-medium text-gray-700 mb-2">
-                    Probation Applicable
+                  <label htmlFor="noticePeriodDuration" className="block text-sm font-medium text-gray-700 mb-2">
+                    Notice Period Duration
                   </label>
                   <input
+                    type="text"
+                    id="noticePeriodDuration"
+                    name="employeeEmploymentDetailsDTO.noticePeriodDuration"
+                    value={formData.employeeEmploymentDetailsDTO?.noticePeriodDuration || ''}
+                    onChange={handleChange}
+                    placeholder="e.g. 30 days"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+
+                {/* Probation Applicable */}
+                <div className="flex items-center gap-3">
+                  <input
                     type="checkbox"
-                    id="employeeEmploymentDetailsDTO.probationApplicable"
+                    id="probationApplicable"
                     name="employeeEmploymentDetailsDTO.probationApplicable"
                     checked={formData.employeeEmploymentDetailsDTO?.probationApplicable || false}
                     onChange={handleChange}
-                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    className="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                   />
+                  <label htmlFor="probationApplicable" className="text-sm font-medium text-gray-700">
+                    Probation Applicable
+                  </label>
                 </div>
+
+                {/* Conditional: Probation Duration */}
                 {formData.employeeEmploymentDetailsDTO?.probationApplicable && (
                   <div>
-                    <label htmlFor="employeeEmploymentDetailsDTO.probationDuration" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="probationDuration" className="block text-sm font-medium text-gray-700 mb-2">
                       Probation Duration
                     </label>
                     <input
                       type="text"
-                      id="employeeEmploymentDetailsDTO.probationDuration"
+                      id="probationDuration"
                       name="employeeEmploymentDetailsDTO.probationDuration"
                       value={formData.employeeEmploymentDetailsDTO?.probationDuration || ''}
                       onChange={handleChange}
+                      placeholder="e.g. 3 months"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
                 )}
-                <div>
-                  <label htmlFor="employeeEmploymentDetailsDTO.bondApplicable" className="block text-sm font-medium text-gray-700 mb-2">
-                    Bond Applicable
-                  </label>
+
+                {/* Conditional: Probation Notice Period */}
+                {formData.employeeEmploymentDetailsDTO?.probationApplicable && (
+                  <div>
+                    <label htmlFor="probationNoticePeriod" className="block text-sm font-medium text-gray-700 mb-2">
+                      Probation Notice Period
+                    </label>
+                    <input
+                      type="text"
+                      id="probationNoticePeriod"
+                      name="employeeEmploymentDetailsDTO.probationNoticePeriod"
+                      value={formData.employeeEmploymentDetailsDTO?.probationNoticePeriod || ''}
+                      onChange={handleChange}
+                      placeholder="e.g. 15 days"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                )}
+
+                {/* Bond Applicable */}
+                <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
-                    id="employeeEmploymentDetailsDTO.bondApplicable"
+                    id="bondApplicable"
                     name="employeeEmploymentDetailsDTO.bondApplicable"
                     checked={formData.employeeEmploymentDetailsDTO?.bondApplicable || false}
                     onChange={handleChange}
-                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    className="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                   />
+                  <label htmlFor="bondApplicable" className="text-sm font-medium text-gray-700">
+                    Bond Applicable
+                  </label>
                 </div>
+
+                {/* Conditional: Bond Duration */}
                 {formData.employeeEmploymentDetailsDTO?.bondApplicable && (
                   <div>
-                    <label htmlFor="employeeEmploymentDetailsDTO.bondDuration" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="bondDuration" className="block text-sm font-medium text-gray-700 mb-2">
                       Bond Duration
                     </label>
                     <input
                       type="text"
-                      id="employeeEmploymentDetailsDTO.bondDuration"
+                      id="bondDuration"
                       name="employeeEmploymentDetailsDTO.bondDuration"
                       value={formData.employeeEmploymentDetailsDTO?.bondDuration || ''}
                       onChange={handleChange}
+                      placeholder="e.g. 12 months"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
                 )}
+
+                {/* Date of Confirmation */}
+                <div>
+                  <label htmlFor="dateOfConfirmation" className="block text-sm font-medium text-gray-700 mb-2">
+                    Date of Confirmation
+                  </label>
+                  <input
+                    type="date"
+                    id="dateOfConfirmation"
+                    name="employeeEmploymentDetailsDTO.dateOfConfirmation"
+                    value={formData.employeeEmploymentDetailsDTO?.dateOfConfirmation || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
               </div>
             </div>
 
@@ -998,19 +1068,7 @@ const AddEmployeePage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
-                <div>
-                  <label htmlFor="employeeAdditionalDetailsDTO.backgroundCheckStatus" className="block text-sm font-medium text-gray-700 mb-2">
-                    Background Check Status
-                  </label>
-                  <input
-                    type="text"
-                    id="employeeAdditionalDetailsDTO.backgroundCheckStatus"
-                    name="employeeAdditionalDetailsDTO.backgroundCheckStatus"
-                    value={formData.employeeAdditionalDetailsDTO?.backgroundCheckStatus || ''}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
+                
                 <div>
                   <label htmlFor="employeeAdditionalDetailsDTO.remarks" className="block text-sm font-medium text-gray-700 mb-2">
                     Remarks
@@ -1035,6 +1093,18 @@ const AddEmployeePage = () => {
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
+                </div>
+                <div>
+                  <label htmlFor="employeeAdditionalDetailsDTO.backgroundCheckStatus" className="block text-sm font-medium text-gray-700 mb-2">
+                    Background Check Status
+                  </label>
+                  <input
+                    type="text"
+                    id="employeeAdditionalDetailsDTO.backgroundCheckStatus"
+                    name="employeeAdditionalDetailsDTO.backgroundCheckStatus"
+                    value={formData.employeeAdditionalDetailsDTO?.backgroundCheckStatus || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"                  />
                 </div>
               </div>
             </div>
