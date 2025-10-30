@@ -978,3 +978,38 @@ export interface LoginInnerResponse {
   data: LoginResponseInner;
   message?: string;
 }
+
+// --- For GET /web/api/v1/employee/activeemployees/list ---
+export interface WebResponseDTOListActiveEmployees {
+  flag: boolean;
+  message: string;
+  status: number; // int32
+  response: { employeeId: string; firstName: string; lastName: string }[];
+  totalRecords: number;
+  otherInfo: Record<string, any>;
+}
+
+// --- For GET /web/api/v1/salary/{employeeId} ---
+export interface WebResponseDTOSalarySummaryDTO {
+  flag: boolean;
+  message: string;
+  status: number; // int32
+  response: SalarySummaryDTO;
+  totalRecords: number;
+  otherInfo: Record<string, any>;
+}
+
+export interface EmployeeDetailsDTO {
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  dateOfJoining: string; // ISO string, e.g. "2023-06-15"
+  department?: string;
+  designation?: string;
+}
+
+export interface WebResponseDTOEmployeeDetails {
+  status: string;
+  message: string;
+  response: EmployeeDetailsDTO;
+}
