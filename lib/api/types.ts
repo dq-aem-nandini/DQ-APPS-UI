@@ -1,5 +1,5 @@
 // Enums
-export type Role = "ADMIN" | "EMPLOYEE" | "CLIENT" | "MANAGER";
+export type Role = "ADMIN" | "EMPLOYEE" | "CLIENT" | "MANAGER" | "HR" | "FINANCE";
 
 export type Designation =
   | "INTERN"
