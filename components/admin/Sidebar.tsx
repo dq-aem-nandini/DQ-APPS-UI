@@ -13,6 +13,7 @@ import {
   CogIcon,
 } from '@heroicons/react/24/outline';
 import { FileTextIcon, LogOut } from 'lucide-react';
+import Image from 'next/image';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -48,7 +49,16 @@ export default function AdminSidebar() {
     <aside className="w-64 bg-white border-r border-gray-200 min-h-screen p-5 shadow-sm flex flex-col justify-between">
       {/* Logo */}
       <div>
-        <div className="text-2xl font-bold text-indigo-600 mb-8 text-center">DigiQuad</div>
+        <div className="flex items-center justify-center space-x-4 mb-8">
+          <Image
+            src="/digiquad logo.jpeg"
+            alt="DigiQuad Logo"
+            width={50}
+            height={50}
+            className="rounded-full shadow-sm"
+          />
+          <div className="text-2xl font-bold text-indigo-600">DigiQuad</div>
+        </div>
 
         {/* Navigation Sections */}
         {navSections.map((section) => (
@@ -63,11 +73,10 @@ export default function AdminSidebar() {
                   <Link
                     key={href}
                     href={href}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-150 ${
-                      isActive
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-150 ${isActive
                         ? 'bg-indigo-100 text-indigo-700 font-medium'
                         : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
-                    }`}
+                      }`}
                   >
                     {icon}
                     <span>{label}</span>

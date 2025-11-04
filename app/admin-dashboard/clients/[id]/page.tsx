@@ -40,9 +40,12 @@ const ViewClientPage = () => {
 
   // Modal State
   const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [month, setMonth] = useState('');
+  const [year, setYear] = useState('');
   const [generating, setGenerating] = useState(false);
+
+  const currentMonth = new Date().getMonth() + 1; // 1-12
+  const currentYear = new Date().getFullYear();
 
   // Auto-hide toast
   useEffect(() => {
@@ -51,6 +54,14 @@ const ViewClientPage = () => {
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  // Set default month/year when modal opens
+  useEffect(() => {
+    if (showGenerateModal) {
+      setMonth(String(currentMonth).padStart(2, '0'));
+      setYear(String(currentYear));
+    }
+  }, [showGenerateModal, currentMonth, currentYear]);
 
   // ────────────────────── FETCH CLIENT ──────────────────────
   useEffect(() => {
@@ -72,38 +83,48 @@ const ViewClientPage = () => {
     fetchClient();
   }, [id, withLoading]);
 
-// Update handleGenerateInvoice function
-const handleGenerateInvoice = async () => {
-  setGenerating(true);
-  try {
-    const invoice: InvoiceDTO = await invoiceService.generateInvoice(
-      id as string
-      // No fromDate/toDate - defaults to current month
-    );
-
-    setToast({ type: 'success', message: `Invoice ${invoice.invoiceNumber} generated for current month!` });
-    setShowGenerateModal(false);
-
-    // Open PDF
-    setTimeout(() => {
-      window.open(`/admin-dashboard/invoice/${invoice.invoiceId}`, '_self');
-    }, 1000);
-  } catch (err: any) {
-    let errorMessage = 'Failed to generate invoice';
-    if (err.response?.status === 409) {
-      errorMessage = 'Invoice already exists for this client and date range. Cannot generate duplicate.';
-    } else {
-      errorMessage = err.message || 'Failed to generate invoice';
+  // ────────────────────── GENERATE INVOICE ──────────────────────
+  const handleGenerateInvoice = async () => {
+    if (!month || !year) {
+      Swal.fire({ icon: 'warning', title: 'Invalid Date', text: 'Please select month and year.' });
+      return;
     }
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: errorMessage,
-    });
-  } finally {
-    setGenerating(false);
-  }
-};
+
+    setGenerating(true);
+    try {
+      const invoice: InvoiceDTO = await invoiceService.generateInvoice(
+        id as string,
+        parseInt(month),
+        parseInt(year)
+      );
+
+      setToast({
+        type: 'success',
+        message: `Invoice ${invoice.invoiceNumber} generated for ${new Date(year + '-' + month).toLocaleString('default', { month: 'long', year: 'numeric' })}!`,
+      });
+
+      setShowGenerateModal(false);
+
+      // Open invoice in new tab after 1s
+      setTimeout(() => {
+        window.open(`/admin-dashboard/invoice/${invoice.clientId}`, '_blank');
+      }, 1000);
+    } catch (err: any) {
+      let errorMessage = 'Failed to generate invoice';
+      if (err.response?.status === 409) {
+        errorMessage = 'Invoice already exists for this client and selected month/year.';
+      } else {
+        errorMessage = err.message || 'Failed to generate invoice';
+      }
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: errorMessage,
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   // ────────────────────── INITIAL LOADING ──────────────────────
   if (loading && !client) {
@@ -164,7 +185,7 @@ const handleGenerateInvoice = async () => {
                     </div>
                   </div>
 
-                  {/* Single Generate Button */}
+                  {/* Generate Invoice Button */}
                   <button
                     onClick={() => setShowGenerateModal(true)}
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2.5 px-5 rounded-xl font-medium hover:from-green-700 hover:to-emerald-700 transition shadow-md"
@@ -312,59 +333,82 @@ const handleGenerateInvoice = async () => {
           )}
         </div>
 
-    {/* Generate Invoice Modal - Current Month Only */}
-{showGenerateModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md">
-      <div className="flex items-center justify-between mb-5">
-        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          <Calendar className="w-6 h-6 text-indigo-600" />
-          Generate Invoice
-        </h3>
-        <button
-          onClick={() => {
-            setShowGenerateModal(false);
-          }}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          <XCircle className="w-6 h-6" />
-        </button>
-      </div>
+        {/* Generate Invoice Modal - Month + Year Picker */}
+        {showGenerateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Calendar className="w-6 h-6 text-indigo-600" />
+                  Generate Invoice
+                </h3>
+                <button
+                  onClick={() => setShowGenerateModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
 
-      <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
-        <p>This will generate an invoice for the <strong>current month</strong></p>
-      </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                  <select
+                    value={month}
+                    onChange={(e) => setMonth(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="">Select Month</option>
+                    {[...Array(12)].map((_, i) => (
+                      <option key={i + 1} value={String(i + 1).padStart(2, '0')}>
+                        {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-      <div className="flex gap-3 mt-6">
-        <button
-          onClick={handleGenerateInvoice}
-          disabled={generating}
-          className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2.5 px-4 rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {generating ? (
-            <>
-              <Spinner size="sm" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <Download className="w-5 h-5" />
-              Generate
-            </>
-          )}
-        </button>
-        <button
-          onClick={() => {
-            setShowGenerateModal(false);
-          }}
-          className="flex-1 bg-gray-100 text-gray-700 py-2.5 px-4 rounded-lg font-medium hover:bg-gray-200 transition"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                  <input
+                    type="number"
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    min="2000"
+                    max="2100"
+                    placeholder="2025"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={handleGenerateInvoice}
+                  disabled={generating || !month || !year}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2.5 px-4 rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {generating ? (
+                    <>
+                      <Spinner size="sm" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-5 h-5" />
+                      Generate
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowGenerateModal(false)}
+                  className="flex-1 bg-gray-100 text-gray-700 py-2.5 px-4 rounded-lg font-medium hover:bg-gray-200 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );

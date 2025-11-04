@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, Home, Users, Clock, Calendar, BarChart2 } from 'lucide-react';
+import Image from 'next/image';
 
 const Sidebar: React.FC = () => {
   const pathname = usePathname();
@@ -32,7 +33,16 @@ const Sidebar: React.FC = () => {
         } lg:translate-x-0 fixed lg:static w-64 bg-white shadow-sm border-r border-gray-200 h-full lg:h-auto transition-transform duration-300 z-10`}
       >
         <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-6">Manager Menu</h2>
+         <div className="flex items-center justify-center space-x-4 mb-8">
+                   <Image
+                     src="/digiquad logo.jpeg"
+                     alt="DigiQuad Logo"
+                     width={50}
+                     height={50}
+                     className="rounded-full shadow-sm"
+                   />
+                   <div className="text-2xl font-bold text-indigo-600">DigiQuad</div>
+                 </div>
           <nav>
             <ul className="space-y-2">
               {navItems.map((item) => (

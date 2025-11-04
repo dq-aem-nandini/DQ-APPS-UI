@@ -18,6 +18,7 @@ import {
   Bell,
   Users,
 } from 'lucide-react';
+import Image from 'next/image';
 
 const navSections = [
   {
@@ -57,8 +58,16 @@ export default function Sidebar() {
     <aside className="w-64 bg-white border-r border-gray-200 min-h-screen p-5 shadow-sm flex flex-col justify-between">
       {/* Logo */}
       <div>
-        <div className="text-2xl font-bold text-indigo-600 mb-8 text-center">DigiQuad</div>
-
+       <div className="flex items-center justify-center space-x-4 mb-8">
+                 <Image
+                   src="/digiquad logo.jpeg"
+                   alt="DigiQuad Logo"
+                   width={50}
+                   height={50}
+                   className="rounded-full shadow-sm"
+                 />
+                 <div className="text-2xl font-bold text-indigo-600">DigiQuad</div>
+               </div>
         {/* Navigation Sections */}
         {navSections.map((section) => (
           <div key={section.title} className="mb-6">

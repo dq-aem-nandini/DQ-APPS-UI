@@ -1027,6 +1027,7 @@ export interface InvoiceDTO {
   dueDate: string;         // ISO Date (YYYY-MM-DD)
   fromDate: string;        // ISO Date (YYYY-MM-DD)
   toDate: string;          // ISO Date (YYYY-MM-DD)
+  locked: boolean;
 }
 
 // For list responses
@@ -1057,9 +1058,14 @@ export interface EmployeeWorkSummaryDTO {
 
 // ClientInvoiceSummaryDTO
 export interface ClientInvoiceSummaryDTO {
+  clientId: string;
+  invoiceStatus: InvoiceStatus;
+  invoiceId: string;
   invoiceNumber: string;
   invoiceDate: string; // ISO date string
   totalAmount: number;
+  fromDate : string; // ISO date string
+  toDate : string; // ISO date string
   employeeWorkSummaries: EmployeeWorkSummaryDTO[];
 }
 
