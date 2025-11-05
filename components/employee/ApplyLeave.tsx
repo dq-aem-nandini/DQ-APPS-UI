@@ -12,6 +12,7 @@ import {
   LeaveResponseDTO,
 } from '@/lib/api/types';
 import { useAuth } from '@/context/AuthContext';
+import BackButton from '../ui/BackButton';
 
 const ApplyLeavePage: React.FC = () => {
   const { state: { user } } = useAuth();
@@ -239,9 +240,13 @@ const ApplyLeavePage: React.FC = () => {
 
   return (
     <div className="apply-leave-page p-6 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">
-        {formData.leaveId ? 'Update Leave Request' : 'Apply for New Leave'}
-      </h1>
+      <div className="mb-10 flex items-center justify-between">
+        <BackButton to="/dashboard/leaves" />
+        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          {formData.leaveId ? 'Update Leave Request' : 'Apply for New Leave'}
+        </h1>
+        <div className="w-20" />
+      </div>
 
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md space-y-4">
         {/* Leave Type */}

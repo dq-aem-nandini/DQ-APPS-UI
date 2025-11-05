@@ -143,22 +143,6 @@ const ViewEmployee = () => {
             <InfoItem label="Client Name" value={getValue(employee.clientName)} />
             <InfoItem label="Reporting Manager" value={getValue(employee.reportingManagerName)} />
             <InfoItem label="Company" value={getValue(employee.clientName)} />
-            {/* <InfoItem
-              label="Status"
-              value={
-                <span
-                  className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                    employee.status.toUpperCase() === 'ACTIVE'
-                      ? 'bg-green-100 text-green-800'
-                      : employee.status.toUpperCase() === 'INACTIVE'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {employee.status}
-                </span>
-              }
-            /> */}
           </div>
         </div>
 

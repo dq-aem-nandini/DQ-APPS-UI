@@ -15,11 +15,24 @@ import {
   EmployeeEmploymentDetailsDTO,
   EmployeeInsuranceDetailsDTO,
   EmployeeStatutoryDetailsDTO,
+  AllowanceDTO, DeductionDTO
 } from '@/lib/api/types';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Swal from 'sweetalert2';
 import Link from 'next/link';
-
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { Trash2, Plus, IndianRupee, Briefcase } from 'lucide-react';
+import BackButton from '@/components/ui/BackButton';
 interface Manager {
   id: string;
   name: string;
@@ -114,6 +127,8 @@ const EditEmployeePage = () => {
       bankAccountNumber: '',
       ifscCode: '',
       payClass: 'STANDARD',
+      allowances: [],
+      deductions: [],
     },
     employeeAdditionalDetailsDTO: {
       offerLetterUrl: '',
@@ -396,13 +411,13 @@ const EditEmployeePage = () => {
     const eq = formData.employeeEquipmentDTO?.[index];
     if (eq?.equipmentId) {
       const res = await adminService.deleteEmployeeEquipmentInfo(eq.equipmentId); // Only 1 arg
-  
+
       if (!res.flag) {
         Swal.fire({ icon: 'error', title: 'Delete failed', text: res.message });
         return;
       }
     }
-  
+
     setFormData(prev => ({
       ...prev,
       employeeEquipmentDTO: prev.employeeEquipmentDTO?.filter((_, i) => i !== index) ?? [],
@@ -530,155 +545,447 @@ const EditEmployeePage = () => {
     <ProtectedRoute allowedRoles={['ADMIN']}>
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Edit Employee</h2>
-            <Link
-              href="/admin-dashboard/employees/list"
-              className="px-5 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition flex items-center gap-2"
-            >
-              Back to List
-            </Link>
+          <div className="mb-10 flex items-center justify-between">
+            <BackButton to="/admin-dashboard/employees/list" />
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Edit Employee
+            </h1>
+            <div className="w-20" />
           </div>
-
           <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-6 space-y-8">
 
             {/* Personal Details */}
-            <section className="border-b border-gray-200 pb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
-                  <input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <Card>
+              <CardHeader>
+                <CardTitle>Personal Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">First Name *</Label>
+                    <Input name="firstName" value={formData.firstName} onChange={handleChange} required />
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Last Name *</Label>
+                    <Input name="lastName" value={formData.lastName} onChange={handleChange} required />
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Personal Email *</Label>
+                    <Input name="personalEmail" type="email" value={formData.personalEmail} onChange={handleChange} required />
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Company Email *</Label>
+                    <Input name="companyEmail" type="email" value={formData.companyEmail} onChange={handleChange} required />
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Contact Number *</Label>
+                    <Input name="contactNumber" value={formData.contactNumber} onChange={handleChange} required />
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Date of Birth *</Label>
+                    <Input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} max={today} required />
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Nationality *</Label>
+                    <Input name="nationality" value={formData.nationality} onChange={handleChange} required />
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Gender *</Label>
+                    <Select value={formData.gender} onValueChange={v => setFormData(p => ({ ...p, gender: v }))}>
+                      <SelectTrigger className="w-full min-w-[200px] !h-11"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MALE">Male</SelectItem>
+                        <SelectItem value="FEMALE">Female</SelectItem>
+                        <SelectItem value="OTHER">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-3">
+                    <Label className="mb-2 block text-sm font-medium">Skills & Certification *</Label>
+                    <textarea
+                      name="skillsAndCertification"
+                      value={formData.skillsAndCertification}
+                      onChange={handleChange}
+                      required
+                      rows={2}
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
-                  <input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </div>
-                <div>
-                  <label htmlFor="personalEmail" className="block text-sm font-medium text-gray-700 mb-1">Personal Email *</label>
-                  <input id="personalEmail" name="personalEmail" value={formData.personalEmail} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </div>
-                <div>
-                  <label htmlFor="companyEmail" className="block text-sm font-medium text-gray-700 mb-1">Company Email *</label>
-                  <input id="companyEmail" name="companyEmail" value={formData.companyEmail} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </div>
-                <div>
-                  <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-700 mb-1">Contact Number *</label>
-                  <input id="contactNumber" name="contactNumber" value={formData.contactNumber ?? ''} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </div>
-                <div>
-                  <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
-                  <input type="date" id="dateOfBirth" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} max={today} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </div>
-                <div>
-                  <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">Nationality *</label>
-                  <input id="nationality" name="nationality" value={formData.nationality ?? ''} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </div>
-                <div>
-                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
-                  <select id="gender" name="gender" value={formData.gender} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">Select gender</option>
-                    <option value="MALE">Male</option>
-                    <option value="FEMALE">Female</option>
-                    <option value="OTHER">Other</option>
-                  </select>
-                </div>
-                <div className="md:col-span-2 lg:col-span-3">
-                  <label htmlFor="skillsAndCertification" className="block text-sm font-medium text-gray-700 mb-1">Skills & Certification *</label>
-                  <textarea id="skillsAndCertification" name="skillsAndCertification" value={formData.skillsAndCertification} onChange={handleChange} required rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </div>
-              </div>
-            </section>
+              </CardContent>
+            </Card>
 
             {/* Employment Details */}
-            <section className="border-b border-gray-200 pb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Employment Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
-                  <select id="clientId" name="clientId" value={formData.clientId} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">Select Client</option>
-                    {clients.map(c => <option key={c.clientId} value={c.clientId}>{c.companyName}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="reportingManagerId" className="block text-sm font-medium text-gray-700 mb-1">Reporting Manager *</label>
-                  <select id="reportingManagerId" name="reportingManagerId" value={formData.reportingManagerId ?? ''} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">Select Reporting Manager</option>
-                    {managers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="designation" className="block text-sm font-medium text-gray-700 mb-1">Designation *</label>
-                  <select id="designation" name="designation" value={formData.designation} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">Select Designation</option>
-                    {designations.map(d => <option key={d} value={d}>{d.replace('_', ' ')}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="dateOfJoining" className="block text-sm font-medium text-gray-700 mb-1">Date of Joining *</label>
-                  <input type="date" id="dateOfJoining" name="dateOfJoining" value={formData.dateOfJoining} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </div>
-                <div>
-                  <label htmlFor="employmentType" className="block text-sm font-medium text-gray-700 mb-1">Employment Type *</label>
-                  <select id="employmentType" name="employmentType" value={formData.employmentType ?? ""} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">Select Type</option>
-                    {employmentTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="workingModel" className="block text-sm font-medium text-gray-700 mb-1">Working Model</label>
-                  <select id="workingModel" name="employeeEmploymentDetailsDTO.workingModel" value={formData.employeeEmploymentDetailsDTO?.workingModel || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">Select</option>
-                    <option value="REMOTE">Remote</option>
-                    <option value="HYBRID">Hybrid</option>
-                    <option value="ONSITE">Onsite</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                  <input id="department" name="employeeEmploymentDetailsDTO.department" value={formData.employeeEmploymentDetailsDTO?.department || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </div>
-                <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                  <input id="location" name="employeeEmploymentDetailsDTO.location" value={formData.employeeEmploymentDetailsDTO?.location || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </div>
-                <div>
-                  <label htmlFor="noticePeriodDuration" className="block text-sm font-medium text-gray-700 mb-1">Notice Period</label>
-                  <input id="noticePeriodDuration" name="employeeEmploymentDetailsDTO.noticePeriodDuration" value={formData.employeeEmploymentDetailsDTO?.noticePeriodDuration || ''} onChange={handleChange} placeholder="e.g. 30 days" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input id="probationApplicable" type="checkbox" name="employeeEmploymentDetailsDTO.probationApplicable" checked={formData.employeeEmploymentDetailsDTO?.probationApplicable || false} onChange={handleChange} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-                  <label htmlFor="probationApplicable" className="text-sm font-medium text-gray-700">Probation Applicable</label>
-                </div>
-                {formData.employeeEmploymentDetailsDTO?.probationApplicable && (
-                  <>
-                    <div>
-                      <label htmlFor="probationDuration" className="block text-sm font-medium text-gray-700 mb-1">Probation Duration</label>
-                      <input id="probationDuration" name="employeeEmploymentDetailsDTO.probationDuration" value={formData.employeeEmploymentDetailsDTO?.probationDuration || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                    </div>
-                    <div>
-                      <label htmlFor="probationNoticePeriod" className="block text-sm font-medium text-gray-700 mb-1">Probation Notice Period</label>
-                      <input id="probationNoticePeriod" name="employeeEmploymentDetailsDTO.probationNoticePeriod" value={formData.employeeEmploymentDetailsDTO?.probationNoticePeriod || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                    </div>
-                  </>
-                )}
-                <div className="flex items-center gap-2">
-                  <input id="bondApplicable" type="checkbox" name="employeeEmploymentDetailsDTO.bondApplicable" checked={formData.employeeEmploymentDetailsDTO?.bondApplicable || false} onChange={handleChange} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-                  <label htmlFor="bondApplicable" className="text-sm font-medium text-gray-700">Bond Applicable</label>
-                </div>
-                {formData.employeeEmploymentDetailsDTO?.bondApplicable && (
+            {/* EMPLOYMENT & SALARY DETAILS */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-emerald-600" />
+                  Employment & Salary Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                  {/* Client */}
                   <div>
-                    <label htmlFor="bondDuration" className="block text-sm font-medium text-gray-700 mb-1">Bond Duration</label>
-                    <input id="bondDuration" name="employeeEmploymentDetailsDTO.bondDuration" value={formData.employeeEmploymentDetailsDTO?.bondDuration || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <Label className="mb-2 block text-sm font-medium">Client *</Label>
+                    <Select value={formData.clientId} onValueChange={v => setFormData(p => ({ ...p, clientId: v }))}>
+                      <SelectTrigger className="w-full min-w-[200px] !h-11"><SelectValue placeholder="Select Client" /></SelectTrigger>
+                      <SelectContent>{clients.map(c => <SelectItem key={c.clientId} value={c.clientId}>{c.companyName}</SelectItem>)}</SelectContent>
+                    </Select>
                   </div>
-                )}
-                <div>
-                  <label htmlFor="dateOfConfirmation" className="block text-sm font-medium text-gray-700 mb-1">Date of Confirmation</label>
-                  <input type="date" id="dateOfConfirmation" name="employeeEmploymentDetailsDTO.dateOfConfirmation" value={formData.employeeEmploymentDetailsDTO?.dateOfConfirmation || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+
+                  {/* Reporting Manager */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Reporting Manager *</Label>
+                    <Select value={formData.reportingManagerId ?? ''} onValueChange={v => setFormData(p => ({ ...p, reportingManagerId: v }))}>
+                      <SelectTrigger className="w-full min-w-[200px] !h-11"><SelectValue placeholder="Select Manager" /></SelectTrigger>
+                      <SelectContent>{managers.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Designation */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Designation *</Label>
+                    <Select value={formData.designation} onValueChange={v => setFormData(p => ({ ...p, designation: v as Designation }))}>
+                      <SelectTrigger className="w-full min-w-[200px] !h-11"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>{designations.map(d => <SelectItem key={d} value={d}>{d.replace(/_/g, ' ')}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Date of Joining */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Date of Joining *</Label>
+                    <Input type="date" name="dateOfJoining" value={formData.dateOfJoining} onChange={handleChange} required />
+                  </div>
+
+                  {/* Employment Type */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Employment Type *</Label>
+                    <Select value={formData.employmentType} onValueChange={v => setFormData(p => ({ ...p, employmentType: v as EmploymentType }))}>
+                      <SelectTrigger className="w-full min-w-[200px] !h-11"><SelectValue /></SelectTrigger>
+                      <SelectContent>{employmentTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Rate Card */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Rate Card (₹ per hour) *</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      name="rateCard"
+                      value={formData.rateCard ?? ''}
+                      onChange={(e) => {
+                        const rate = parseFloat(e.target.value) || 0;
+                        setFormData(prev => ({
+                          ...prev,
+                          rateCard: rate,
+                          employeeSalaryDTO: {
+                            ...prev.employeeSalaryDTO!,
+                            payType: rate > 0 ? 'HOURLY' : 'MONTHLY',
+                          },
+                        }));
+                      }}
+                      required
+                    />
+                  </div>
+
+                  {/* Pay Type (Auto) */}
+                  <div className="flex items-center space-x-2">
+                    <IndianRupee className="h-4 w-4 text-emerald-600" />
+                    <span className="text-sm font-medium">
+                      Pay Type: <span className="font-bold text-primary">{formData.employeeSalaryDTO?.payType || 'MONTHLY'}</span>
+                    </span>
+                  </div>
+
+                  {/* Basic Pay */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Basic Pay (₹) *</Label>
+                    <Input type="number" name="employeeSalaryDTO.basicPay" value={formData.employeeSalaryDTO?.basicPay ?? ''} onChange={handleChange} required />
+                  </div>
+
+                  {/* Standard Hours */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Standard Hours *</Label>
+                    <Input type="number" name="employeeSalaryDTO.standardHours" value={formData.employeeSalaryDTO?.standardHours ?? 40} onChange={handleChange} required />
+                  </div>
+
+                  {/* Bank Account */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Bank Account Number *</Label>
+                    <Input name="employeeSalaryDTO.bankAccountNumber" value={formData.employeeSalaryDTO?.bankAccountNumber || ''} onChange={handleChange} required />
+                  </div>
+
+                  {/* IFSC Code */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">IFSC Code *</Label>
+                    <Input name="employeeSalaryDTO.ifscCode" value={formData.employeeSalaryDTO?.ifscCode || ''} onChange={handleChange} pattern="[A-Z]{4}0[A-Z0-9]{6}" required />
+                  </div>
+
+                  {/* Pay Class */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Pay Class</Label>
+                    <Select value={formData.employeeSalaryDTO?.payClass || 'STANDARD'} onValueChange={v => setFormData(p => ({ ...p, employeeSalaryDTO: { ...p.employeeSalaryDTO!, payClass: v } }))}>
+                      <SelectTrigger className="w-full min-w-[200px] !h-11"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="STANDARD">Standard</SelectItem>
+                        <SelectItem value="EXECUTIVE">Executive</SelectItem>
+                        <SelectItem value="MANAGERIAL">Managerial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Working Model */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Working Model</Label>
+                    <Select value={formData.employeeEmploymentDetailsDTO?.workingModel || ''} onValueChange={v => handleChange({ target: { name: 'employeeEmploymentDetailsDTO.workingModel', value: v } } as any)}>
+                      <SelectTrigger className="w-full min-w-[200px] !h-11"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="REMOTE">Remote</SelectItem>
+                        <SelectItem value="HYBRID">Hybrid</SelectItem>
+                        <SelectItem value="ONSITE">Onsite</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Department */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Department</Label>
+                    <Input name="employeeEmploymentDetailsDTO.department" value={formData.employeeEmploymentDetailsDTO?.department || ''} onChange={handleChange} />
+                  </div>
+
+                  {/* Location */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Location</Label>
+                    <Input name="employeeEmploymentDetailsDTO.location" value={formData.employeeEmploymentDetailsDTO?.location || ''} onChange={handleChange} />
+                  </div>
+
+                  {/* Notice Period */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Notice Period</Label>
+                    <Input name="employeeEmploymentDetailsDTO.noticePeriodDuration" value={formData.employeeEmploymentDetailsDTO?.noticePeriodDuration || ''} onChange={handleChange} placeholder="e.g. 30 days" />
+                  </div>
+
+                  {/* Probation */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={formData.employeeEmploymentDetailsDTO?.probationApplicable || false}
+                      onCheckedChange={v => handleChange({ target: { name: 'employeeEmploymentDetailsDTO.probationApplicable', checked: v } } as any)}
+                    />
+                    <Label className="mb-2 block text-sm font-medium">Probation Applicable</Label>
+                  </div>
+
+                  {formData.employeeEmploymentDetailsDTO?.probationApplicable && (
+                    <>
+                      <div>
+                        <Label className="mb-2 block text-sm font-medium">Probation Duration</Label>
+                        <Input name="employeeEmploymentDetailsDTO.probationDuration" value={formData.employeeEmploymentDetailsDTO?.probationDuration || ''} onChange={handleChange} placeholder="e.g. 6 months" />
+                      </div>
+                      <div>
+                        <Label className="mb-2 block text-sm font-medium">Probation Notice Period</Label>
+                        <Input name="employeeEmploymentDetailsDTO.probationNoticePeriod" value={formData.employeeEmploymentDetailsDTO?.probationNoticePeriod || ''} onChange={handleChange} placeholder="e.g. 15 days" />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Bond */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={formData.employeeEmploymentDetailsDTO?.bondApplicable || false}
+                      onCheckedChange={v => handleChange({ target: { name: 'employeeEmploymentDetailsDTO.bondApplicable', checked: v } } as any)}
+                    />
+                    <Label className="mb-2 block text-sm font-medium">Bond Applicable</Label>
+                  </div>
+
+                  {formData.employeeEmploymentDetailsDTO?.bondApplicable && (
+                    <div>
+                      <Label className="mb-2 block text-sm font-medium">Bond Duration</Label>
+                      <Input name="employeeEmploymentDetailsDTO.bondDuration" value={formData.employeeEmploymentDetailsDTO?.bondDuration || ''} onChange={handleChange} placeholder="e.g. 12 months" />
+                    </div>
+                  )}
+
+                  {/* Date of Confirmation */}
+                  <div>
+                    <Label className="mb-2 block text-sm font-medium">Date of Confirmation</Label>
+                    <Input type="date" name="employeeEmploymentDetailsDTO.dateOfConfirmation" value={formData.employeeEmploymentDetailsDTO?.dateOfConfirmation || ''} onChange={handleChange} />
+                  </div>
+
+                  {/* ALLOWANCES */}
+                  <div className="md:col-span-3">
+                    <Label className="mb-2 block text-sm font-medium">Allowances</Label>
+                    {formData.employeeSalaryDTO?.allowances?.map((a, i) => (
+                      <div
+                        key={a.allowanceId || `allowance-${i}`}
+                        className="flex gap-2 mb-2 items-center"
+                      >
+                        <Input
+                          placeholder="Type (e.g., HRA)"
+                          value={a.allowanceType}
+                          onChange={(e) => {
+                            const updated = [...(formData.employeeSalaryDTO?.allowances || [])];
+                            updated[i].allowanceType = e.target.value;
+                            setFormData((p) => ({
+                              ...p,
+                              employeeSalaryDTO: { ...p.employeeSalaryDTO!, allowances: updated },
+                            }));
+                          }}
+                        />
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="Amount"
+                          value={a.amount}
+                          onChange={(e) => {
+                            const updated = [...(formData.employeeSalaryDTO?.allowances || [])];
+                            updated[i].amount = parseFloat(e.target.value) || 0;
+                            setFormData((p) => ({
+                              ...p,
+                              employeeSalaryDTO: { ...p.employeeSalaryDTO!, allowances: updated },
+                            }));
+                          }}
+                        />
+                        <Input
+                          type="date"
+                          value={a.effectiveDate}
+                          onChange={(e) => {
+                            const updated = [...(formData.employeeSalaryDTO?.allowances || [])];
+                            updated[i].effectiveDate = e.target.value;
+                            setFormData((p) => ({
+                              ...p,
+                              employeeSalaryDTO: { ...p.employeeSalaryDTO!, allowances: updated },
+                            }));
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            const updated =
+                              formData.employeeSalaryDTO?.allowances?.filter((_, idx) => idx !== i) || [];
+                            setFormData((p) => ({
+                              ...p,
+                              employeeSalaryDTO: { ...p.employeeSalaryDTO!, allowances: updated },
+                            }));
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const newAllowance: AllowanceDTO = {
+                          allowanceId: crypto.randomUUID(),
+                          allowanceType: '',
+                          amount: 0,
+                          effectiveDate: '',
+                        };
+                        setFormData(p => ({
+                          ...p,
+                          employeeSalaryDTO: {
+                            ...p.employeeSalaryDTO!,
+                            allowances: [...(p.employeeSalaryDTO?.allowances || []), newAllowance],
+                          },
+                        }));
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-1" /> Add Allowance
+                    </Button>
+                  </div>
+
+                  {/* DEDUCTIONS */}
+                  <div className="md:col-span-3">
+                    <Label className="mb-2 block text-sm font-medium">Deductions</Label>
+                    {formData.employeeSalaryDTO?.deductions?.map((d, i) => (
+                      <div key={d.deductionId || `deduction-${i}`} className="flex gap-2 mb-2 items-center">
+                        <Input
+                          placeholder="Type (e.g., PF)"
+                          value={d.deductionType}
+                          onChange={e => {
+                            const updated = [...(formData.employeeSalaryDTO?.deductions || [])];
+                            updated[i].deductionType = e.target.value;
+                            setFormData(p => ({
+                              ...p,
+                              employeeSalaryDTO: { ...p.employeeSalaryDTO!, deductions: updated }
+                            }));
+                          }}
+                        />
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="Amount"
+                          value={d.amount}
+                          onChange={e => {
+                            const updated = [...(formData.employeeSalaryDTO?.deductions || [])];
+                            updated[i].amount = parseFloat(e.target.value) || 0;
+                            setFormData(p => ({
+                              ...p,
+                              employeeSalaryDTO: { ...p.employeeSalaryDTO!, deductions: updated }
+                            }));
+                          }}
+                        />
+                        <Input
+                          type="date"
+                          value={d.effectiveDate}
+                          onChange={e => {
+                            const updated = [...(formData.employeeSalaryDTO?.deductions || [])];
+                            updated[i].effectiveDate = e.target.value;
+                            setFormData(p => ({
+                              ...p,
+                              employeeSalaryDTO: { ...p.employeeSalaryDTO!, deductions: updated }
+                            }));
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            const updated = formData.employeeSalaryDTO?.deductions?.filter((_, idx) => idx !== i) || [];
+                            setFormData(p => ({
+                              ...p,
+                              employeeSalaryDTO: { ...p.employeeSalaryDTO!, deductions: updated }
+                            }));
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const newDeduction: DeductionDTO = {
+                          deductionId: crypto.randomUUID(),
+                          deductionType: '',
+                          amount: 0,
+                          effectiveDate: '',
+                        };
+                        setFormData(p => ({
+                          ...p,
+                          employeeSalaryDTO: {
+                            ...p.employeeSalaryDTO!,
+                            deductions: [...(p.employeeSalaryDTO?.deductions || []), newDeduction],
+                          },
+                        }));
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-1" /> Add Deduction
+                    </Button>
+                  </div>
+
                 </div>
-              </div>
-            </section>
+              </CardContent>
+            </Card>
 
             {/* ==================== DOCUMENTS ==================== */}
             <section className="border-b border-gray-200 pb-8">

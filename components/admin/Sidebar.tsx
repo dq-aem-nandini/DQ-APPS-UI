@@ -87,17 +87,6 @@ export default function AdminSidebar() {
           </div>
         ))}
       </div>
-
-      {/* Logout Button */}
-      <div className="border-t border-gray-100 pt-4">
-        <Link
-          href="/logout"
-          className="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-all duration-150"
-        >
-          <LogOut className="h-5 w-5" />
-          <span>Logout</span>
-        </Link>
-      </div>
     </aside>
   );
 }

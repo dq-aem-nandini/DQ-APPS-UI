@@ -168,10 +168,12 @@ export default function AdminPage() {
   /* ────── RENDER ────── */
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-8">
-      {/* ── Header ── */}
-      <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Employee Salaries</h1>
-      </header>
+
+      <div className="relative flex items-center justify-center mb-10">
+        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+          Employee Salaries
+        </h1>
+      </div>
 
       {/* ── FILTERS CARD ── */}
       <Card>
