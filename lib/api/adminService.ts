@@ -59,33 +59,11 @@ class AdminService {
       console.log('✅ [updateClient] API Response:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ [updateClient] Failed to update client:', error?.message || error);
+      console.error(' [updateClient] Failed to update client:', error?.message || error);
       throw new Error(`Failed to update client: ${error}`);
     }
   }
 
-  // ✅ Update employee
-  // async updateEmployee(empId: string, employee: EmployeeModel): Promise<WebResponseDTOString> {
-  //   try {
-  //     const payload = {
-  //       ...employee,
-  //       employeeEquipmentDTO: Array.isArray(employee.employeeEquipmentDTO)
-  //         ? employee.employeeEquipmentDTO[0]
-  //         : employee.employeeEquipmentDTO || null,
-  //       employeeAdditionalDetailsDTO: Array.isArray(employee.employeeAdditionalDetailsDTO)
-  //         ? employee.employeeAdditionalDetailsDTO[0]
-  //         : employee.employeeAdditionalDetailsDTO || null,
-  //     };
-
-  //     const response: AxiosResponse<WebResponseDTOString> = await api.put(
-  //       `/admin/updateemp/${empId}`,
-  //       payload
-  //     );
-  //     return response.data;
-  //   } catch (error) {
-  //     throw new Error(`Failed to update employee: ${error}`);
-  //   }
-  // }
   // ✅ Update employee
 async updateEmployee(empId: string, employee: EmployeeModel): Promise<WebResponseDTOString> {
   try {
@@ -130,7 +108,7 @@ async updateEmployee(empId: string, employee: EmployeeModel): Promise<WebRespons
       const response: AxiosResponse<WebResponseDTOClientDTO> = await api.get(`/admin/client/${clientId}`);
       return response.data;
     } catch (error: any) {
-      console.error('❌ [getClientById] Failed:', error);
+      console.error('[getClientById] Failed:', error);
       throw new Error(`Failed to get client by ID: ${error}`);
     }
   }
@@ -259,7 +237,7 @@ async updateEmployee(empId: string, employee: EmployeeModel): Promise<WebRespons
 
       return response.data;
     } catch (error: any) {
-      console.error("❌ [deleteEmployeeEquipmentInfo] Failed to delete employee equipment:", error?.message || error);
+      console.error("[deleteEmployeeEquipmentInfo] Failed to delete employee equipment:", error?.message || error);
       if (error.response) {
         console.error("🚨 [deleteEmployeeEquipmentInfo] Server Error Response:", error.response.data);
         console.error("🔗 [deleteEmployeeEquipmentInfo] Endpoint:", error.config?.url);

@@ -390,6 +390,8 @@ export interface SalarySummaryDTO {
   netSalary: number;
   paymentStatus?: string; // e.g., "UNPAID", "PAID"
   payrollStatus?: string; // e.g., "DRAFT", "FINALIZED"
+  paidLeaves: number;
+  unpaidLeaves: number;
 }
 
 export interface ProjectDTO {
@@ -862,6 +864,8 @@ export interface EmployeeUpdateRequestDTO {
 
 export interface NotificationDTO {
   id: string; // UUID
+  employeeId: string; // UUID
+  employeeFullName: string;
   message: string;
   referenceId: string; // UUID
   read: boolean;

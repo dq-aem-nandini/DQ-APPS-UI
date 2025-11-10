@@ -8,9 +8,10 @@ import isBetween from 'dayjs/plugin/isBetween';
 import Spinner from '@/components/ui/Spinner';
 import { managerTimeSheetService } from '@/lib/api/managerTimeSheetService';
 import { holidaysService } from '@/lib/api/holidayService';
+import { leaveService } from '@/lib/api/leaveService'; 
 import {
   TimeSheetResponseDto,
-  HolidayCalendarDTO,
+  HolidayCalendarDTO,EmployeeLeaveDayDTO
 } from '@/lib/api/types';
 // import { useSearchParams } from "next/navigation";
 
@@ -22,8 +23,13 @@ export default function ManagerTimesheetReview() {
   const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; name: string } | null>(null);
   const [timesheets, setTimesheets] = useState<TimeSheetResponseDto[]>([]);
   const [holidays, setHolidays] = useState<HolidayCalendarDTO[]>([]);
+  const [leaves, setLeaves] = useState<EmployeeLeaveDayDTO[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentWeekStart, setCurrentWeekStart] = useState(dayjs().startOf('isoWeek'));
+  const [showModal, setShowModal] = useState(false);
+  const [modalAction, setModalAction] = useState<'APPROVE' | 'REJECT' | null>(null);
+  const [managerComment, setManagerComment] = useState('');
+
 // const searchParams = useSearchParams();
 // const employeeIdFromQuery = searchParams.get("employeeId");
 
@@ -66,26 +72,59 @@ export default function ManagerTimesheetReview() {
     }
   }, []);
 
-//     // 🧩 Automatically select employee from query param
-// useEffect(() => {
-//   if (!employeeIdFromQuery) return;
-//   if (employees.length === 0) return; // wait until employees are loaded
+  // Fetch leaves of the employee
+useEffect(() => {
+    console.log("🟢 Leaves useEffect triggered:", selectedEmployee, currentWeekStart.format("YYYY-MM-DD"));
 
-//   const emp = employees.find((e) => e.id === employeeIdFromQuery);
-//   if (emp) {
-//     setSelectedEmployee(emp);
-//     fetchTimesheets(emp.id);
-//   } else {
-//     console.warn("Employee not found for ID:", employeeIdFromQuery);
-//   }
-// }, [employeeIdFromQuery, employees.length]); // ✅ note: depends on employees.length only
+  const fetchLeaves = async () => {
+    if (!selectedEmployee?.id){
+      console.log("Skipping leaves fetch — no selectedEmployee");
+      return;
+    }
+    try {
+      const currentYear = dayjs(currentWeekStart).year().toString();
+      console.log(" Fetching leaves for:", {
+      empId: selectedEmployee.id,
+      year: currentYear,
+    });
+      const data = await leaveService.getApprovedLeaves(selectedEmployee.id, currentYear);
+      console.log("Leaves fetched:", data);
+      setLeaves(data);
+    } catch (err) {
+      console.error('Error fetching approved leaves:', err);
+    }
+  };
+  fetchLeaves();
+}, [selectedEmployee,currentWeekStart]);
+  
+  // Auto-select employee and week from URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const employeeIdFromQuery = urlParams.get("employeeId");
+    const weekFromQuery = urlParams.get("week");
 
+    if (!employeeIdFromQuery) return;
+    if (employees.length === 0) return;
 
+    const emp = employees.find((e) => e.id === employeeIdFromQuery);
+    if (emp) {
+      setSelectedEmployee(emp);
+      if (weekFromQuery) {
+        const weekStart = dayjs(weekFromQuery).startOf('isoWeek');
+        if (weekStart.isValid()) {
+          setCurrentWeekStart(weekStart);
+        }
+      }
+    }
+  }, [employees]);
+  
   useEffect(() => {
     if (selectedEmployee?.id) {
       fetchTimesheets(selectedEmployee.id);
     }
   }, [selectedEmployee, fetchTimesheets]);
+
+  
 
   // 🧩 Filter only the current week (but keep all statuses)
   const filteredTimesheets = useMemo(
@@ -99,35 +138,37 @@ export default function ManagerTimesheetReview() {
   const weekDays = Array.from({ length: 7 }, (_, i) => currentWeekStart.add(i, 'day'));
 
   // Approve / Reject handler
-  const handleApproveReject = async (action: 'APPROVE' | 'REJECT') => {
-    if (!selectedEmployee) return alert('Select an employee first');
-    const ids = filteredTimesheets.map((t) => t.timesheetId);
-    if (ids.length === 0) return alert('No timesheets found for this week');
+ const handleApproveReject = (action: 'APPROVE' | 'REJECT') => {
+  if (!selectedEmployee) return alert('Select an employee first');
+  const ids = filteredTimesheets.map((t) => t.timesheetId);
+  if (ids.length === 0) return alert('No timesheets found for this week');
 
-      // Confirmation message
-    const confirmMsg =
-      action === 'APPROVE'
-        ? 'Are you sure you want to APPROVE the selected timesheets?'
-        : 'Are you sure you want to REJECT the selected timesheets?';
+  setModalAction(action);
+  setShowModal(true); // open modal instead of confirm
+};
+const confirmAction = async () => {
+  if (!modalAction || !selectedEmployee) return;
+  const ids = filteredTimesheets.map((t) => t.timesheetId);
 
-    if (!window.confirm(confirmMsg)) {
-      return; // stop execution if user cancels
+  try {
+    setLoading(true);
+
+    if (modalAction === 'APPROVE') {
+      await managerTimeSheetService.approveTimesheets(ids, managerComment);
+    } else {
+      await managerTimeSheetService.rejectTimesheets(ids, managerComment);
     }
 
-    try {
-      setLoading(true);
-      if (action === 'APPROVE') {
-        await managerTimeSheetService.approveTimesheets(ids);
-      } else {
-        await managerTimeSheetService.rejectTimesheets(ids);
-      }
-      await fetchTimesheets(selectedEmployee.id);
-    } catch (err) {
-      console.error('Error updating timesheet status:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    await fetchTimesheets(selectedEmployee.id);
+  } catch (err) {
+    console.error('Error updating timesheet status:', err);
+  } finally {
+    setLoading(false);
+    setShowModal(false);
+    setManagerComment('');
+  }
+};
+
 
   return (
     <div className="p-6">
@@ -154,7 +195,7 @@ export default function ManagerTimesheetReview() {
         </select>
       </div>
 
-      {/* Week Navigation */}
+     {/* Week Navigation */}
       <div className="flex items-center gap-4 mb-4">
         <button
           onClick={() => setCurrentWeekStart((p) => p.subtract(1, 'week'))}
@@ -173,13 +214,56 @@ export default function ManagerTimesheetReview() {
         </button>
       </div>
 
+      {/* Show this message when no employee is selected */}
+      {!selectedEmployee && (
+        <p className="text-center text-gray-600 mt-10 text-lg font-medium">
+          Please select an Employee to view Timesheet for the week
+        </p>
+      )}
+
+      {/* Status + Manager Comment */}
+      {filteredTimesheets.length > 0 && (
+        <div className={`mb-4 p-4 rounded-lg font-medium border shadow-sm ${
+          filteredTimesheets[0].status === 'DRAFT' ? 'bg-gray-50 text-gray-700 border-gray-300' :
+          filteredTimesheets[0].status === 'PENDING' ? 'bg-orange-50 text-orange-800 border-orange-300' :
+          filteredTimesheets[0].status === 'SUBMITTED' ? 'bg-blue-50 text-blue-800 border-blue-300' :
+          filteredTimesheets[0].status === 'APPROVED' ? 'bg-green-50 text-green-800 border-green-300' :
+          filteredTimesheets[0].status === 'REJECTED' ? 'bg-red-50 text-red-800 border-red-300' :
+          'bg-gray-50 text-gray-700 border-gray-300'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm">Timesheet Status:</span>{' '}
+              <strong className="text-base">{filteredTimesheets[0].status}</strong>
+              <span className="text-sm ml-2">
+                {filteredTimesheets[0].status === 'DRAFT' && '– Editable (Draft)'}
+                {filteredTimesheets[0].status === 'PENDING' && '– Locked (Awaiting Final Save)'}
+                {filteredTimesheets[0].status === 'SUBMITTED' && '– Editable (Waiting for Submission by Employee)'}
+                {filteredTimesheets[0].status === 'APPROVED' && '– Locked (Approved)'}
+                {filteredTimesheets[0].status === 'REJECTED' && '– Editable (Please Revise)'}
+              </span>
+            </div>
+            {filteredTimesheets[0].managerComment && (
+              <div className="text-right">
+                <span className="text-xs block text-gray-600">Manager Comment:</span>
+                <span className="text-sm font-medium">{filteredTimesheets[0].managerComment}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
       {/* Timesheet Grid */}
       {loading ? (
         <div className="flex justify-center py-10">
           <Spinner />
         </div>
-      ) : filteredTimesheets.length === 0 ? (
-        <p className="text-center text-gray-500 mt-10">No data found for this week.</p>
+      ) : filteredTimesheets.length === 0 || filteredTimesheets[0]?.status === 'SUBMITTED' ? (
+        <p className="text-center text-gray-500 mt-10">
+          {filteredTimesheets[0]?.status === 'SUBMITTED'
+            ? 'Timesheet is submitted and awaiting approval.'
+            : 'No data found for this week.'}
+        </p>
       ) : (
         <div className="overflow-x-auto border rounded-xl bg-white shadow-sm">
           <table className="min-w-full text-sm text-center border-collapse">
@@ -199,14 +283,36 @@ export default function ManagerTimesheetReview() {
             <tbody>
               {Array.from(new Set(filteredTimesheets.map((t) => t.taskName))).map((task) => (
                 <tr key={task} className="border-b">
-                  <td className="py-2 px-4 text-left">{task}</td>
+                  <td className="py-2 px-4 text-left font-medium">{task}</td>
+
                   {weekDays.map((day) => {
                     const record = filteredTimesheets.find(
                       (ts) => ts.taskName === task && dayjs(ts.workDate).isSame(day, 'day')
                     );
+
+                    // Find leave for this day
+                    const leave = leaves.find((l) => dayjs(l.date).isSame(day, 'day'));
+
+                    // Only show 'L' if it's a FULL-DAY approved leave
+                    const isFullDayLeave =
+                      leave &&
+                      ['SICK', 'CASUAL', 'PLANNED', 'UNPLANNED'].includes(leave.leaveCategory) &&
+                      leave.duration === 1.0;
+
+                    const displayValue = isFullDayLeave
+                      ? 'L'
+                      : record
+                      ? record.workedHours
+                      : 0;
+
                     return (
-                      <td key={day.toString()} className="py-2 px-4">
-                        {record ? record.workedHours : 0}
+                      <td
+                        key={day.toString()}
+                        className={`py-2 px-4 text-center font-semibold ${
+                          isFullDayLeave ? 'text-red-600' : 'text-gray-800'
+                        }`}
+                      >
+                        {displayValue}
                       </td>
                     );
                   })}
@@ -229,55 +335,71 @@ export default function ManagerTimesheetReview() {
                   );
                 })}
               </tr>
-
-              <tr>
-                <td className="py-2 px-4 font-semibold text-left">Status</td>
-                {weekDays.map((day) => {
-                  const ts = timesheets.find((t) => dayjs(t.workDate).isSame(day, "day"));
-                  const status = ts?.status || "PENDING";
-
-                  return (
-                    <td key={day.format("YYYY-MM-DD")} className="py-2 px-4 text-center">
-                      <span
-                        className={`px-2 py-1 rounded-lg text-white text-xs ${
-                          status === "APPROVED"
-                            ? "bg-green-600"
-                            : status === "SUBMITTED"
-                            ? "bg-blue-600"
-                            : status === "PENDING"
-                            ? "bg-yellow-500"
-                            // : "bg-gray-400"
-                            :status === "REJECTED" ? 
-                          "bg-red-600" : "bg-gray-400"
-
-                        }`}
-                      >
-                        {status}
-                      </span>
-                    </td>
-                  );
-                })}
-              </tr>
+              
             </tfoot>
           </table>
-
+          
           {/* Approve / Reject Buttons */}
           <div className="flex justify-end gap-4 p-4 border-t bg-gray-50">
-            <button
-              onClick={() => handleApproveReject('APPROVE')}
-              className="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700"
-            >
-              Approve
-            </button>
-            <button
-              onClick={() => handleApproveReject('REJECT')}
-              className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700"
-            >
-              Reject
-            </button>
+            {filteredTimesheets.length > 0 && filteredTimesheets[0].status !== 'APPROVED' && (
+              <button
+                onClick={() => handleApproveReject('APPROVE')}
+                className="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700"
+              >
+                Approve
+              </button>
+            )}
+            {filteredTimesheets.length > 0 && ['PENDING', 'REJECTED'].includes(filteredTimesheets[0].status) && (
+              <button
+                onClick={() => handleApproveReject('REJECT')}
+                className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700"
+              >
+                Reject
+              </button>
+            )}
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+        {showModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-96">
+              <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                {modalAction === 'APPROVE' ? 'Approve Timesheets' : 'Reject Timesheets'}
+              </h3>
+              <p className="text-gray-600 mb-3">
+                Are you sure you want to {modalAction?.toLowerCase()} the selected timesheets?
+              </p>
+
+              <textarea
+                className="w-full border border-gray-300 rounded-lg p-2 mb-4"
+                rows={3}
+                placeholder="Enter manager comment..."
+                value={managerComment}
+                onChange={(e) => setManagerComment(e.target.value)}
+              />
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmAction}
+                  disabled={loading}
+                  className={`px-4 py-2 rounded-lg text-white ${
+                    modalAction === 'APPROVE' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+                  }`}
+                >
+                  {loading ? 'Processing...' : 'Yes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

@@ -4,6 +4,10 @@ import React, { useEffect, useState } from "react";
 import { notificationService } from "@/lib/api/notificationService";
 import { NotificationDTO } from "@/lib/api/types";
 import { Bell, MoreVertical, X } from "lucide-react";
+import SockJS from "sockjs-client";
+import { Stomp } from "@stomp/stompjs";
+import { timesheetService } from "@/lib/api/timeSheetService";
+import dayjs from "dayjs";
 
 // ✅ Accept className as a prop with a default size
 interface NotificationBellProps {
@@ -18,9 +22,48 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = "h-6 w-
     useState<NotificationDTO | null>(null);
   const [showModal, setShowModal] = useState(false);
 
+  const userId =
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+
   useEffect(() => {
     loadNotifications();
-  }, []);
+
+    if (!userId) return;
+
+    // ✅ WebSocket live updates setup
+    const socket = new SockJS("http://localhost:8080/ws");
+    const stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, () => {
+      console.log("✅ Connected to WebSocket");
+
+      stompClient.subscribe(`/topic/notifications/${userId}`, (message) => {
+        if (message.body) {
+          try {
+            const data = JSON.parse(message.body);
+            // Handle both single & array notifications
+            const newNotifications = Array.isArray(data) ? data : [data];
+
+            setNotifications((prev) => [
+              ...newNotifications.map((n) => ({ ...n, read: false })),
+              ...prev,
+            ]);
+          } catch (err) {
+            console.error("Error parsing WebSocket message:", err);
+          }
+        }
+      });
+    });
+
+    // ✅ Cleanup on unmount (must be synchronous)
+    return () => {
+      if (stompClient && stompClient.connected) {
+        stompClient.disconnect(() => {
+          console.log("WebSocket disconnected");
+        });
+      }
+    };
+  }, [userId]);
 
   const loadNotifications = async () => {
     try {
@@ -51,21 +94,61 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = "h-6 w-
     }
   };
 
+  // ✅ When clicking a notification -> open modal
+  // const handleOpenNotification = async (notification: NotificationDTO) => {
+  //   try {
+  //     if (!notification.read)
+  //       await notificationService.markAsRead([notification.id]);
+  //     setNotifications((prev) =>
+  //       prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
+  //     );
+  //     setSelectedNotification(notification);
+  //     setShowModal(true);
+  //   } catch (error) {
+  //     console.error("Error opening notification:", error);
+  //   }
+  // };
+        // Navigate based on notification type
   const handleOpenNotification = async (notification: NotificationDTO) => {
     try {
-      if (!notification.read) await notificationService.markAsRead([notification.id]);
+      // Mark as read
+      if (!notification.read) {
+        await notificationService.markAsRead([notification.id]);
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
+        );
+      }
 
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
-      );
+      if (notification.notificationType === "TIMESHEET") {
+        // Fetch one timesheet to get workDate
+        const res = await timesheetService.getTimesheetById(notification.referenceId,'referenceId');
+        const timesheet = res.response;
+        if (!timesheet?.workDate) {
+          setSelectedNotification(notification);
+          setShowModal(true);
+          return;
+        }
 
+        const workDate = dayjs(timesheet.workDate);
+        const weekStart = workDate.startOf('isoWeek');
+
+        // Navigate to manager timesheet with employee + week
+        const url = `/manager/timesheets?employeeId=${notification.employeeId}&week=${weekStart.format('YYYY-MM-DD')}`;
+        window.location.href = url;
+      } 
+      else if (notification.notificationType === "LEAVE") {
+        window.location.href = `/manager/leaves`;
+      } 
+      else {
+        setSelectedNotification(notification);
+        setShowModal(true);
+      }
+    } catch (error) {
+      console.error("Error handling notification click:", error);
       setSelectedNotification(notification);
       setShowModal(true);
-    } catch (error) {
-      console.error("Error opening notification:", error);
     }
   };
-
   return (
     <div className="relative">
       {/* 🔔 Bell Icon */}
@@ -108,6 +191,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = "h-6 w-
                     </p>
                   </div>
 
+                  {/* ⋮ Menu */}
                   <div className="relative ml-2">
                     <button
                       onClick={(e) => {
@@ -150,7 +234,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = "h-6 w-
             )}
           </div>
 
-          {/* Clear All */}
+          {/* 🧹 Clear All */}
           {notifications.length > 0 && (
             <div className="p-2 border-t text-center">
               <button
@@ -167,10 +251,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = "h-6 w-
         </div>
       )}
 
-      {/* Modal */}
-      {showModal && selectedNotification && (
+      {/* 🪟 Notification Details Modal */}
+        {showModal && selectedNotification && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0  bg-opacity-50 flex items-start pt-54  justify-center z-50"
           onClick={() => setShowModal(false)}
         >
           <div
@@ -183,15 +267,15 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = "h-6 w-
             >
               <X className="w-5 h-5" />
             </button>
-
+ 
             <h2 className="text-lg font-semibold mb-3 text-gray-800">
               Notification Details
             </h2>
-
+ 
             <p className="text-gray-700 mb-4 whitespace-pre-wrap">
               {selectedNotification.message}
             </p>
-
+ 
             <div className="text-sm text-gray-500 space-y-1">
               <p>
                 <span className="font-medium text-gray-600">Reference ID:</span>{" "}
