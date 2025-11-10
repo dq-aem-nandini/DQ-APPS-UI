@@ -1,4 +1,3 @@
-//components/NotificationBell.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -10,7 +9,12 @@ import { Stomp } from "@stomp/stompjs";
 import { timesheetService } from "@/lib/api/timeSheetService";
 import dayjs from "dayjs";
 
-const NotificationBell: React.FC = () => {
+// ✅ Accept className as a prop with a default size
+interface NotificationBellProps {
+  className?: string;
+}
+
+const NotificationBell: React.FC<NotificationBellProps> = ({ className = "h-6 w-6" }) => {
   const [notifications, setNotifications] = useState<NotificationDTO[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
@@ -148,11 +152,8 @@ const NotificationBell: React.FC = () => {
   return (
     <div className="relative">
       {/* 🔔 Bell Icon */}
-      <button
-        onClick={() => setDropdownOpen(!isDropdownOpen)}
-        className="relative"
-      >
-        <Bell className="w-6 h-6 text-gray-700" />
+      <button onClick={() => setDropdownOpen(!isDropdownOpen)} className="relative">
+        <Bell className={`${className}`} />
         {notifications.some((n) => !n.read) && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
             {notifications.filter((n) => !n.read).length}
@@ -160,14 +161,12 @@ const NotificationBell: React.FC = () => {
         )}
       </button>
 
-      {/* 🔽 Dropdown */}
+      {/* Dropdown */}
       {isDropdownOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-white shadow-xl rounded-lg z-50 border border-gray-200">
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">
-                No notifications
-              </p>
+              <p className="text-gray-500 text-center py-4">No notifications</p>
             ) : (
               notifications.map((notification) => (
                 <div
@@ -198,14 +197,13 @@ const NotificationBell: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         setOpenMenuId(
-                          openMenuId === notification.id
-                            ? null
-                            : notification.id
+                          openMenuId === notification.id ? null : notification.id
                         );
                       }}
                     >
                       <MoreVertical className="w-4 h-4 text-gray-500" />
                     </button>
+
                     {openMenuId === notification.id && (
                       <div className="absolute right-0 mt-2 bg-white border rounded shadow-md z-10 min-w-[140px]">
                         <button
