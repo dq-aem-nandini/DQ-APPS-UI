@@ -284,7 +284,7 @@ const ViewEmployee = () => {
 
         {/* Salary & Compensation */}
         {employee.employeeSalaryDTO && (
-          hasValue(employee.employeeSalaryDTO.basicPay) ||
+          hasValue(employee.employeeSalaryDTO.ctc) ||
           hasValue(employee.employeeSalaryDTO.payType) ||
           hasValue(employee.employeeSalaryDTO.standardHours) ||
           hasValue(employee.employeeSalaryDTO.payClass) ||
@@ -297,7 +297,7 @@ const ViewEmployee = () => {
               Salary & Compensation
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {hasValue(employee.employeeSalaryDTO.basicPay) && <InfoItem label="Basic Pay" value={String(employee.employeeSalaryDTO.basicPay!)} />}
+              {hasValue(employee.employeeSalaryDTO.ctc) && <InfoItem label="CTC" value={String(employee.employeeSalaryDTO.ctc!)} />}
               {hasValue(employee.employeeSalaryDTO.payType) && <InfoItem label="Pay Type" value={employee.employeeSalaryDTO.payType!} />}
               {hasValue(employee.employeeSalaryDTO.standardHours) && <InfoItem label="Standard Hours" value={String(employee.employeeSalaryDTO.standardHours!)} />}
               {hasValue(employee.employeeSalaryDTO.payClass) && <InfoItem label="Pay Class" value={employee.employeeSalaryDTO.payClass!} />}

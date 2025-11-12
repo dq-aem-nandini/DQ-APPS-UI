@@ -277,6 +277,10 @@ export type AuthAction =
       refreshToken: string | null;
     };
   }
+  | {
+    type: "UPDATE_USER";
+    payload: Partial<LoggedInUser>;
+  }
   | { type: "LOGOUT" }
   | { type: "SET_LOADING"; payload: boolean };
 
@@ -367,7 +371,7 @@ export interface EmployeeStatutoryDetailsDTO {
 
 export interface EmployeeSalaryDTO {
   employeeId: string; // UUID
-  basicPay: number;
+  ctc: number;
   payType: PayType; 
   standardHours: number;
   bankAccountNumber: string;

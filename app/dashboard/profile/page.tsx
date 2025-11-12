@@ -511,7 +511,7 @@ const ProfilePage = () => {
 
                 {profile.employeeSalaryDTO && (
                   <InfoCard title="Salary" icon={<DollarSign className="w-6 h-6 text-green-600" />}>
-                    <Info label="Basic Pay" value={`₹${profile.employeeSalaryDTO.basicPay}`} />
+                    <Info label="CTC" value={`₹${profile.employeeSalaryDTO.ctc}`} />
                     <Info label="Pay Type" value={profile.employeeSalaryDTO.payType} />
                     <Info label="Standard Working Hours" value={profile.employeeSalaryDTO.standardHours} />
                     <Info label="Pay Class" value={profile.employeeSalaryDTO.payClass} />

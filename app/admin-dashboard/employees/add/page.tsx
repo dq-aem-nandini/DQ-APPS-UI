@@ -93,7 +93,7 @@ const AddEmployeePage = () => {
     documents: [],
     employeeSalaryDTO: {
       employeeId: '',
-      basicPay: 0,
+      ctc: 0,
       payType: 'MONTHLY' as PayType,
       standardHours: 40,
       bankAccountNumber: '',
@@ -485,7 +485,7 @@ const AddEmployeePage = () => {
     const employeeData: EmployeeModel = {
       ...formData,
       documents: uploadedDocuments.length > 0 ? uploadedDocuments : formData.documents,
-      employeeSalaryDTO: formData.employeeSalaryDTO?.basicPay
+      employeeSalaryDTO: formData.employeeSalaryDTO?.ctc
         ? { ...formData.employeeSalaryDTO }
         : undefined,
       employeeAdditionalDetailsDTO: {
@@ -701,7 +701,7 @@ const AddEmployeePage = () => {
                   </div>
                   {/* Basic Pay */}
                   <div>
-                    <Label className="mb-2 block text-sm font-medium">Basic Pay *</Label>
+                    <Label className="mb-2 block text-sm font-medium">CTC *</Label>
                     <Input
                       className="h-11"
                       type="number"
@@ -709,7 +709,7 @@ const AddEmployeePage = () => {
                       step="0.01"
                       name="employeeSalaryDTO.basicPay"
                       required
-                      value={formData.employeeSalaryDTO?.basicPay ?? ''}
+                      value={formData.employeeSalaryDTO?.ctc ?? ''}
                       onChange={handleChange}
                     />
                   </div>

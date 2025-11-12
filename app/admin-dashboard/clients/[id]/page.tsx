@@ -32,6 +32,7 @@ import {
   Users,
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { Button } from '@/components/ui/button';
 
 const ViewClientPage = () => {
   const { id } = useParams();
@@ -275,53 +276,55 @@ const ViewClientPage = () => {
                         <Users className="w-5 h-5 text-indigo-600" />
                         Employees ({employees.length})
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {employees.map((emp) => (
-                          <button
-                            key={emp.employeeId}
-                            onClick={() => router.push(`/admin-dashboard/employees/${emp.employeeId}`)}
-                            className="text-left p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer group"
-                          >
-                            <div className="flex items-center gap-3">
-                              {emp.employeePhotoUrl ? (
-                                <img
-                                  src={emp.employeePhotoUrl}
-                                  alt={emp.firstName}
-                                  className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                                  <User className="w-6 h-6 text-gray-500" />
-                                </div>
-                              )}
-                              <div className="flex-1">
-                                <p className="font-semibold text-gray-900 group-hover:text-indigo-700 transition">
-                                  {emp.firstName} {emp.lastName}
-                                </p>
-                                <p className="text-sm text-gray-600">{emp.designation || '—'}</p>
-                              </div>
-                              <div className="opacity-0 group-hover:opacity-100 transition">
-                                <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                              </div>
-                            </div>
-                            <div className="mt-2 text-xs text-gray-500">
-                              {emp.companyEmail && (
-                                <span className="block">
-                                  <span className="mt-2 text-xs text-black">Email : </span>
-                                  {emp.companyEmail}
-                                </span>
-                              )}
-                              {emp.contactNumber && (
-                                <div className="mt-2 text-sm">
-                                  <span className="mt-2 text-xs text-black">Phone Number: </span>
-                                  <span>{emp.contactNumber}</span>
-                                </div>
-                              )}                            </div>
-                          </button>
-                        ))}
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200">
+                              <th className="text-left p-3 text-sm font-semibold text-gray-700">Employee</th>
+                              <th className="text-left p-3 text-sm font-semibold text-gray-700 hidden md:table-cell">Designation</th>
+                              <th className="text-left p-3 text-sm font-semibold text-gray-700">Email</th>
+                              <th className="text-left p-3 text-sm font-semibold text-gray-700 hidden lg:table-cell">Phone</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {employees.map((emp, index) => (
+                              <tr
+                                key={emp.employeeId}
+                                className={`border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 cursor-pointer ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
+                                  }`}
+                                onClick={() => router.push(`/admin-dashboard/employees/${emp.employeeId}`)}
+                              >
+                                <td className="p-3">
+                                  <div className="flex items-center gap-3">
+                                    <div>
+                                      <p className="font-semibold text-gray-900">
+                                        {emp.firstName} {emp.lastName}
+                                      </p>
+                                      <p className="text-sm text-gray-500">{emp.companyEmail}</p>
+                                    </div>
+                                  </div>
+
+                                </td>
+                                <td className="p-3 hidden md:table-cell">
+                                  <span className="text-sm text-gray-700">{emp.designation || '—'}</span>
+                                </td>
+                                <td className="p-3">
+                                  <span className="text-sm text-gray-700 truncate max-w-xs">{emp.companyEmail}</span>
+                                </td>
+                                <td className="p-3 hidden lg:table-cell">
+                                  <span className="text-sm text-gray-700">{emp.contactNumber || '—'}</span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
+                      {employees.length === 0 && (
+                        <div className="text-center py-12">
+                          <User className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                          <p className="text-gray-500">No employees found.</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

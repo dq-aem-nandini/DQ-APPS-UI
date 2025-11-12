@@ -47,12 +47,15 @@ export const authService = {
         `${innerData.firstName ?? ""} ${innerData.lastName ?? ""}`.trim() ||
         "User";
 
+      // FIXED: Extract firstLogin from loginResp (the correct location in response)
+      const firstLogin = loginResp.firstLogin ?? false; // Now pulls from loginResponseDTO.firstLogin
+
       const user: LoggedInUser = {
         userId: userId || "",
         userName: fullName,
         companyEmail: innerData.companyEmail || "",
         role,
-        firstLogin: innerData.firstLogin ?? undefined,
+        firstLogin, // Use the correctly extracted value
         createdAt: innerData.createdAt || "",
         updatedAt: innerData.updatedAt || "",
         profileName: innerData.profileName?.trim() || fullName || "User",
@@ -71,6 +74,7 @@ export const authService = {
         userId: innerData.userId,
         id: innerData.id,
       });
+      console.log("LOGIN SUCCESS - firstLogin:", user.firstLogin); // Debug log
       return { user, accessToken, refreshToken };
     }
 

@@ -129,7 +129,7 @@ const EditEmployeePage = () => {
     documents: [] as FormDocument[],
     employeeSalaryDTO: {
       employeeId: '',
-      basicPay: 0,
+      ctc: 0,
       payType: 'MONTHLY' as PayType,
       standardHours: 40,
       bankAccountNumber: '',
@@ -739,8 +739,8 @@ const EditEmployeePage = () => {
 
                   {/* Basic Pay */}
                   <div>
-                    <Label className="mb-2 block text-sm font-medium">Basic Pay</Label>
-                    <Input type="number" name="employeeSalaryDTO.basicPay" value={formData.employeeSalaryDTO?.basicPay ?? ''} onChange={handleChange} />
+                    <Label className="mb-2 block text-sm font-medium">CTC</Label>
+                    <Input type="number" name="employeeSalaryDTO.basicPay" value={formData.employeeSalaryDTO?.ctc?? ''} onChange={handleChange} />
                   </div>
                   {/* Standard Hours */}
                   <div>
