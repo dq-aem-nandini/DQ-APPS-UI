@@ -1,3 +1,4 @@
+// /app/dashboard/layout.tsx
 import Sidebar from '@/components/employee/Sidebar';
 import Header from '@/components/employee/Header';
 import ProtectedRoute from '@/components/ProtectedRoute';

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { User } from '@/lib/api/types';
+import { LoggedInUser, User } from '@/lib/api/types';
 import NotificationBell from '../NotificationBell';
 import { PasswordService } from '@/lib/api/passwordService';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
+ 
 const Header = () => {
   const { state, logout } = useAuth();
   const router = useRouter();
@@ -30,10 +30,9 @@ const Header = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const user: User | null = state.user;
   const passwordService = new PasswordService();
   const dropdownRef = useRef<HTMLDivElement>(null);
-
+  const user: LoggedInUser | null = state.user as LoggedInUser | null;
   // Click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -134,7 +133,7 @@ const Header = () => {
             <div className="flex items-center space-x-4">
               <NotificationBell className="h-8 w-8 text-yellow-600" />
               <span className="text-lg text-gray-700 hidden md:block font-semibold">
-                Welcome, {user?.userName || 'Employee'}
+              Welcome, {user.profileName || 'Manager'}
               </span>
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -166,10 +165,10 @@ const Header = () => {
                         />
                         <div>
                           <CardTitle className="text-base font-semibold text-gray-900">
-                            {user?.userName || 'Employee'}
+                          {user.profileName || 'Manager'}
                           </CardTitle>
                           <CardDescription className="text-xs text-gray-500">
-                            Role: {user?.role || 'EMPLOYEE'}
+                            Role: {user?.role || 'MANAGER'}
                           </CardDescription>
                         </div>
                       </div>
