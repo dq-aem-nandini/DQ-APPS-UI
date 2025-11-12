@@ -5,13 +5,12 @@ import { employeeService } from '@/lib/api/employeeService';
 import {
   EmployeeDTO,
   AddressModel,
-  IfscResponseDTO,
   BankMaster,
 } from '@/lib/api/types';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
-import { Phone, MapPin, Building, Briefcase, Shield, DollarSign, FileText, User, Edit3, Save, X } from 'lucide-react';
+import { Phone, MapPin, DollarSign, FileText, User, Edit3, Save, X, Briefcase, Shield, Building } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 // Safe value
@@ -98,25 +97,25 @@ const ProfilePage = () => {
     if (isLookingUp || !formData) return;
     setIsLookingUp(true);
     console.log('Looking up IFSC:', ifsc); // DEBUG LOG
-  
+
     try {
       const res = await employeeService.getIFSCDetails(ifsc);
       console.log('API Response:', res); // SEE EXACT RESPONSE
-  
+
       if (res.flag && res.response) {
         const data = res.response;
 
-        const bankName = data.BANK ;
-        const branchName = data.BRANCH ;
-  
+        const bankName = data.BANK;
+        const branchName = data.BRANCH;
+
         console.log('Auto-filling → Bank:', bankName, '| Branch:', branchName);
-  
+
         setFormData(prev => prev ? {
           ...prev,
           bankName: bankName,
           branchName: branchName,
         } : null);
-  
+
         setSuccess('Bank details auto-filled!');
         setBankSearch('');
         setBankOptions([]);
@@ -472,6 +471,14 @@ const ProfilePage = () => {
                   <Info label="Alternate Contact Number" value={profile.alternateContactNumber} />
                 </InfoCard>
 
+                <InfoCard title="Professional" icon={<Briefcase className="w-6 h-6 text-indigo-600" />}>
+                  <Info label="Designation" value={profile.designation?.replace('_', ' ')} />
+                  <Info label="Date of Joining" value={formatDate(profile.dateOfJoining)} />
+                  <Info label="Employment Type" value={profile.employmentType} />
+                  <Info label="Client Name" value={profile.clientName} />
+                  <Info label="Reporting Manager" value={profile.reportingManagerName} />
+                </InfoCard>
+
                 <InfoCard title="Emergency Contact" icon={<Phone className="w-6 h-6 text-red-600" />}>
                   <Info label="Emergency Contact Name" value={profile.emergencyContactName} />
                   <Info label="Emergency Contact Number" value={profile.emergencyContactNumber} />
@@ -487,8 +494,91 @@ const ProfilePage = () => {
                   <Info label="Branch Name" value={profile.branchName} />
                 </InfoCard>
 
-                {/* Other InfoCards (Addresses, Salary, Insurance, etc.) */}
-                {/* ... (same as your original code) */}
+                <InfoCard title="Addresses" icon={<MapPin className="w-6 h-6 text-purple-600" />}>
+                  {profile.addresses.length > 0 ? (
+                    profile.addresses.map((a, i) => (
+                      <div key={a.addressId} className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl mb-4">
+                        <p className="font-semibold text-blue-900">{a.addressType} Address</p>
+                        <p className="text-sm text-gray-700 mt-1">
+                          {a.houseNo}, {a.streetName}, {a.city}, {a.state} - {a.pincode}, {a.country}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500">No addresses added</p>
+                  )}
+                </InfoCard>
+
+                {profile.employeeSalaryDTO && (
+                  <InfoCard title="Salary" icon={<DollarSign className="w-6 h-6 text-green-600" />}>
+                    <Info label="Basic Pay" value={`₹${profile.employeeSalaryDTO.basicPay}`} />
+                    <Info label="Pay Type" value={profile.employeeSalaryDTO.payType} />
+                    <Info label="Standard Working Hours" value={profile.employeeSalaryDTO.standardHours} />
+                    <Info label="Pay Class" value={profile.employeeSalaryDTO.payClass} />
+
+                    {profile.employeeSalaryDTO.allowances && profile.employeeSalaryDTO.allowances.length > 0 && (
+                      <div className="md:col-span-2">
+                        <p className="font-medium text-green-700 mb-2">Allowances</p>
+                        {profile.employeeSalaryDTO.allowances.map((a, i) => (
+                          <p key={i} className="text-sm">• {a.allowanceType}: ₹{a.amount}</p>
+                        ))}
+                      </div>
+                    )}
+                    {profile.employeeSalaryDTO.deductions && profile.employeeSalaryDTO.deductions.length > 0 && (
+                      <div className="md:col-span-2">
+                        <p className="font-medium text-red-700 mb-2">Deductions</p>
+                        {profile.employeeSalaryDTO.deductions.map((d, i) => (
+                          <p key={i} className="text-sm">• {d.deductionType}: ₹{d.amount}</p>
+                        ))}
+                      </div>
+                    )}
+                  </InfoCard>
+                )}
+
+                {profile.employeeInsuranceDetailsDTO && (
+                  <InfoCard title="Insurance" icon={<Shield className="w-6 h-6 text-teal-600" />}>
+                    <Info label="Policy Number" value={profile.employeeInsuranceDetailsDTO.policyNumber} />
+                    <Info label="Insurance Provider" value={profile.employeeInsuranceDetailsDTO.providerName} />
+                    <Info label="Coverage Period" value={`${formatDate(profile.employeeInsuranceDetailsDTO.coverageStart)} to ${formatDate(profile.employeeInsuranceDetailsDTO.coverageEnd)}`} />
+                    <Info label="Nominee Details" value={`${profile.employeeInsuranceDetailsDTO.nomineeName} (${profile.employeeInsuranceDetailsDTO.nomineeRelation})`} />
+                    <Info label="Nominee Contact Number" value={profile.employeeInsuranceDetailsDTO.nomineeContact} />
+                    <Info label="Group Insurance" value={profile.employeeInsuranceDetailsDTO.groupInsurance ? 'Yes' : 'No'} />
+
+                  </InfoCard>
+                )}
+
+                {profile.employeeEquipmentDTO && profile.employeeEquipmentDTO.length > 0 && (
+                  <InfoCard title="Equipment" icon={<Building className="w-6 h-6 text-orange-600" />}>
+                    {profile.employeeEquipmentDTO.map((eq, i) => (
+                      <div key={i} className="bg-orange-50 p-4 rounded-xl text-sm">
+                        <strong>{eq.equipmentType}</strong>: {eq.serialNumber} <br />
+                        <span className="text-gray-600">Issued: {formatDate(eq.issuedDate || '')}</span>
+                      </div>
+                    ))}
+                  </InfoCard>
+                )}
+
+                {profile.employeeStatutoryDetailsDTO && (
+                  <InfoCard title="Statutory" icon={<FileText className="w-6 h-6 text-gray-600" />}>
+                    <Info label="Passport Number" value={profile.employeeStatutoryDetailsDTO.passportNumber} />
+                    <Info label="Tax Regime" value={profile.employeeStatutoryDetailsDTO.taxRegime} />
+                    <Info label="PF UAN Number" value={profile.employeeStatutoryDetailsDTO.pfUanNumber} />
+                    <Info label="ESI Number" value={profile.employeeStatutoryDetailsDTO.esiNumber} />
+                    <Info label="SSN Number" value={profile.employeeStatutoryDetailsDTO.ssnNumber} />
+
+                  </InfoCard>
+                )}
+
+                {profile.employeeEmploymentDetailsDTO && (
+                  <InfoCard title="Employment Details" icon={<Briefcase className="w-6 h-6 text-purple-600" />}>
+                    <Info label="Department" value={profile.employeeEmploymentDetailsDTO.department} />
+                    <Info label="Work Location" value={profile.employeeEmploymentDetailsDTO.location} />
+                    <Info label="Working Model" value={profile.employeeEmploymentDetailsDTO.workingModel} />
+                    <Info label="Shift Timing" value={profile.employeeEmploymentDetailsDTO.shiftTiming} />
+                    <Info label="Notice Period Duration" value={profile.employeeEmploymentDetailsDTO.noticePeriodDuration} />
+
+                  </InfoCard>
+                )}
               </div>
             )}
           </div>

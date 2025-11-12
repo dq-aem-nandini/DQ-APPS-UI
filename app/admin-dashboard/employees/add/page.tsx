@@ -381,7 +381,7 @@ const AddEmployeePage = () => {
     const requiredFields: (keyof EmployeeModel)[] = [
       'firstName', 'lastName', 'personalEmail', 'contactNumber',
       'designation', 'dateOfBirth', 'dateOfJoining', 'gender', 'nationality',
-      'clientId',
+      'clientId','reportingManagerId'
     ];
 
     const missingFields = requiredFields.filter(field => {
@@ -591,34 +591,6 @@ const AddEmployeePage = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                  {/* Client */}
-                  {/* <div>
-                    <Label className="mb-2 block text-sm font-medium">Client *</Label>
-                    <Select
-                      value={selectValue}
-                      onValueChange={v => setFormData(p => ({
-                        ...p,
-                        clientId: staticClients.has(v) ? null : v,
-                        clientSelection: staticClients.has(v) ? `STATUS:${v}` : `CLIENT:${v}`
-                      }))}
-                    >
-                      <SelectTrigger className="w-full min-w-[200px] !h-11">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clients.map(c => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="BENCH">BENCH</SelectItem>
-                        <SelectItem value="INHOUSE">INHOUSE</SelectItem>
-                        <SelectItem value="HR">HR</SelectItem>
-                        <SelectItem value="NA">NA</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div> */}
                   {/* ----------  CLIENT SELECT  ---------- */}
                   <div>
                     <Label className="mb-2 block text-sm font-medium">Client *</Label>
@@ -654,7 +626,7 @@ const AddEmployeePage = () => {
 
                   {/* Reporting Manager */}
                   <div>
-                    <Label className="mb-2 block text-sm font-medium">Reporting Manager </Label>
+                    <Label className="mb-2 block text-sm font-medium">Reporting Manager *</Label>
                     <Select value={formData.reportingManagerId} onValueChange={v => setFormData(p => ({ ...p, reportingManagerId: v }))}>
                       <SelectTrigger className="w-full min-w-[200px] !h-11"><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>{managers.map(m => <SelectItem key={m.employeeId} value={m.employeeId}>{m.firstName} {m.lastName}</SelectItem>)}</SelectContent>
