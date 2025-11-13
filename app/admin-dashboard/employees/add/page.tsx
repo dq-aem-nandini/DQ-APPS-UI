@@ -381,7 +381,7 @@ const AddEmployeePage = () => {
     const requiredFields: (keyof EmployeeModel)[] = [
       'firstName', 'lastName', 'personalEmail', 'contactNumber',
       'designation', 'dateOfBirth', 'dateOfJoining', 'gender', 'nationality',
-      'clientId','reportingManagerId'
+      'clientId',
     ];
 
     const missingFields = requiredFields.filter(field => {
@@ -626,7 +626,7 @@ const AddEmployeePage = () => {
 
                   {/* Reporting Manager */}
                   <div>
-                    <Label className="mb-2 block text-sm font-medium">Reporting Manager *</Label>
+                    <Label className="mb-2 block text-sm font-medium">Reporting Manager </Label>
                     <Select value={formData.reportingManagerId} onValueChange={v => setFormData(p => ({ ...p, reportingManagerId: v }))}>
                       <SelectTrigger className="w-full min-w-[200px] !h-11"><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>{managers.map(m => <SelectItem key={m.employeeId} value={m.employeeId}>{m.firstName} {m.lastName}</SelectItem>)}</SelectContent>
