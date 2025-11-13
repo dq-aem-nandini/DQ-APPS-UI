@@ -277,6 +277,10 @@ export type AuthAction =
       refreshToken: string | null;
     };
   }
+  | {
+    type: "UPDATE_USER";
+    payload: Partial<LoggedInUser>;
+  }
   | { type: "LOGOUT" }
   | { type: "SET_LOADING"; payload: boolean };
 
@@ -367,7 +371,7 @@ export interface EmployeeStatutoryDetailsDTO {
 
 export interface EmployeeSalaryDTO {
   employeeId: string; // UUID
-  basicPay: number;
+  ctc: number;
   payType: PayType; 
   standardHours: number;
   bankAccountNumber: string;
@@ -652,44 +656,32 @@ export interface EmployeeDTO {
   emergencyContactNumber: string;
   remarks: string;
   skillsAndCertification: string;
-
   designation: Designation;
   dateOfJoining: string;            // date
-
   rateCard: number;
   availableLeaves: number;
-
   employmentType: EmploymentType;
-
   companyId: string;
-
   accountNumber: string;
   accountHolderName: string;
   bankName: string;
   ifscCode: string;
   branchName: string;
-
   panNumber: string;
   aadharNumber: string;
-
   clientId: string | null;          // uuid
   clientName: string;
   clientStatus: string;
-
   reportingManagerId: string;       // uuid
   reportingManagerName: string;
-
   documents: EmployeeDocumentDTO[];
   addresses: AddressModel[];
-
-  // Nested DTOs (all optional from backend)
   employeeSalaryDTO?: EmployeeSalaryDTO;
   employeeAdditionalDetailsDTO?: EmployeeAdditionalDetailsDTO;
   employeeEmploymentDetailsDTO?: EmployeeEmploymentDetailsDTO;
   employeeInsuranceDetailsDTO?: EmployeeInsuranceDetailsDTO;
   employeeEquipmentDTO?: EmployeeEquipmentDTO[];
   employeeStatutoryDetailsDTO?: EmployeeStatutoryDetailsDTO;
-
   status: string;
   createdAt: string;                // date-time
   updatedAt: string;                // date-time
@@ -1118,30 +1110,18 @@ export interface LoginResponseDTO {
 export interface LoginResponseInner {
   loginResponseDTO: LoginResponseDTO;
   userId: string; // uuid
-  employeeId?: string; // uuid, for EMPLOYEE or MANAGER roles
-  clientId?: string; // uuid, for CLIENT role
   userName: string;
   companyEmail: string;
-  email?: string; // fallback for companyEmail
-  firstName?: string; // for EMPLOYEE, MANAGER, or CLIENT
-  lastName?: string; // for EMPLOYEE, MANAGER, or CLIENT
-  personalEmail?: string; // for EMPLOYEE or MANAGER
-  contactNumber?: string; // for EMPLOYEE or MANAGER
-  alternateContactNumber?: string; // for EMPLOYEE or MANAGER
-  gender?: string; // for EMPLOYEE or MANAGER
-  maritalStatus?: string; // for EMPLOYEE or MANAGER
-  numberOfChildren?: number; // for EMPLOYEE or MANAGER
-  employeePhotoUrl?: string; // for EMPLOYEE or MANAGER
-  designation?: Designation; // for EMPLOYEE or MANAGER
-  dateOfBirth?: string; // date, for EMPLOYEE or MANAGER
-  dateOfJoining?: string; // date, for EMPLOYEE or MANAGER
-  currency?: string; // for EMPLOYEE or MANAGER
-  rateCard?: number; // for EMPLOYEE or MANAGER
-  panNumber?: string; // for EMPLOYEE or MANAGER
-  aadharNumber?: string; // for EMPLOYEE or MANAGER
-  reportingManagerId?: string; // uuid, for EMPLOYEE or MANAGER
+  profileName:string;
+  role:Role;
+  entityId:string;
+  token:string;
   createdAt: string; // date-time
   updatedAt: string; // date-time
+}
+export interface LoggedInUser extends User {
+  profileName: string;
+  firstLogin?: boolean;
 }
 export interface WebResponseDTOProjectDTO {
   flag: boolean;

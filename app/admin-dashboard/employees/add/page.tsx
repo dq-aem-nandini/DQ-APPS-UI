@@ -93,7 +93,7 @@ const AddEmployeePage = () => {
     documents: [],
     employeeSalaryDTO: {
       employeeId: '',
-      basicPay: 0,
+      ctc: 0,
       payType: 'MONTHLY' as PayType,
       standardHours: 40,
       bankAccountNumber: '',
@@ -485,7 +485,7 @@ const AddEmployeePage = () => {
     const employeeData: EmployeeModel = {
       ...formData,
       documents: uploadedDocuments.length > 0 ? uploadedDocuments : formData.documents,
-      employeeSalaryDTO: formData.employeeSalaryDTO?.basicPay
+      employeeSalaryDTO: formData.employeeSalaryDTO?.ctc
         ? { ...formData.employeeSalaryDTO }
         : undefined,
       employeeAdditionalDetailsDTO: {
@@ -591,34 +591,6 @@ const AddEmployeePage = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                  {/* Client */}
-                  {/* <div>
-                    <Label className="mb-2 block text-sm font-medium">Client *</Label>
-                    <Select
-                      value={selectValue}
-                      onValueChange={v => setFormData(p => ({
-                        ...p,
-                        clientId: staticClients.has(v) ? null : v,
-                        clientSelection: staticClients.has(v) ? `STATUS:${v}` : `CLIENT:${v}`
-                      }))}
-                    >
-                      <SelectTrigger className="w-full min-w-[200px] !h-11">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clients.map(c => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="BENCH">BENCH</SelectItem>
-                        <SelectItem value="INHOUSE">INHOUSE</SelectItem>
-                        <SelectItem value="HR">HR</SelectItem>
-                        <SelectItem value="NA">NA</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div> */}
                   {/* ----------  CLIENT SELECT  ---------- */}
                   <div>
                     <Label className="mb-2 block text-sm font-medium">Client *</Label>
@@ -729,7 +701,7 @@ const AddEmployeePage = () => {
                   </div>
                   {/* Basic Pay */}
                   <div>
-                    <Label className="mb-2 block text-sm font-medium">Basic Pay *</Label>
+                    <Label className="mb-2 block text-sm font-medium">CTC *</Label>
                     <Input
                       className="h-11"
                       type="number"
@@ -737,7 +709,7 @@ const AddEmployeePage = () => {
                       step="0.01"
                       name="employeeSalaryDTO.basicPay"
                       required
-                      value={formData.employeeSalaryDTO?.basicPay ?? ''}
+                      value={formData.employeeSalaryDTO?.ctc ?? ''}
                       onChange={handleChange}
                     />
                   </div>
