@@ -351,18 +351,21 @@ class HolidaysService {
     try {
       const response: AxiosResponse<WebResponseDTO<any>> = await api.get('/holidays/view/calendar');
       console.log('🧩 Full get all calendars API response:', response.data);
+  
+      // ✅ If API success flag is true → return directly
       if (response.data.flag) {
         return response.data;
       }
-      throw new Error(response.data.message || 'Failed to fetch calendars');
+      throw new Error(response.data.message);
     } catch (error: unknown) {
       console.error('❌ Error fetching calendars:', error);
-      const errorMessage = error instanceof AxiosError
-        ? error.response?.data?.message || error.message || 'Failed to fetch calendars'
-        : 'Failed to fetch calendars';
-      throw new Error(errorMessage);
+      if (error instanceof AxiosError && error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
     }
   }
+  
 
   /**
    * Get holiday calendar by ID (GET with path param).

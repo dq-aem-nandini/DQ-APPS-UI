@@ -47,10 +47,12 @@ export default function DashboardContent() {
           upcomingHolidays: upcoming,
           availableLeaves: empData.availableLeaves || 0,
         });
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data. Please refresh the page.');
-      } finally {
+      } catch (err: any) {
+        console.error('❌ Error fetching dashboard data:', err);
+        const backendMessage =
+          err?.response?.data?.message || err?.message ||'';                           
+        setError(backendMessage);
+      }finally {
         setLoading(false);
       }
     };

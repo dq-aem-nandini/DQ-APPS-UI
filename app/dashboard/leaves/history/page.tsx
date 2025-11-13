@@ -59,7 +59,7 @@ const LeaveHistoryPage = () => {
     setError(null);
     try {
       const response = await leaveService.getLeaveSummary(
-        user.userId,
+        undefined,
         filters.month,
         filters.leaveCategory,
         filters.status,
