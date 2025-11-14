@@ -41,7 +41,6 @@ export const salaryService = {
         responseType: "blob", // Important: handle binary PDF file
         headers: { Accept: "application/pdf" },
       });
-
       // Create a blob and trigger download
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
