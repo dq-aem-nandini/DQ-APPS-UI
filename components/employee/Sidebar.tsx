@@ -28,8 +28,7 @@ const navSections = [
     items: [
       { href: '/dashboard/leaves', label: 'Leaves', icon: <FileCheck size={18} /> },
       { href: '/dashboard/holiday', label: 'Holidays', icon: <Gift size={18} /> },
-      { href: '/dashboard/payroll', label: 'Payroll', icon: <FileText size={18} /> },
-      { href: '/dashboard/salary', label: 'Salary', icon: <FileText size={18} /> },
+      { href: '/dashboard/salary', label: 'payslip', icon: <FileText size={18} /> },
     ],
   },
   {
@@ -38,7 +37,7 @@ const navSections = [
       { href: '/dashboard/profile', label: 'Profile', icon: <User size={18} /> },
       { href: '/dashboard/updaterequest', label: 'Update Request', icon: <User size={18} /> },
 
-      { href: '/dashboard/notifications', label: 'Notifications', icon: <Bell size={18} /> },
+      // { href: '/dashboard/notifications', label: 'Notifications', icon: <Bell size={18} /> },
       { href: '/dashboard/settings', label: 'Settings', icon: <Settings size={18} /> },
     ],
   },
