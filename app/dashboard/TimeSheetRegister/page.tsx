@@ -106,7 +106,7 @@ const [employeeDetails, setEmployeeDetails] = useState<{
   };
 
   fetchDOJ();
-}, [userId, state.user?.role]);
+}, []);
 
 const firstAllowedMonday = useMemo(() => {
   if (!joiningDate) return null;
